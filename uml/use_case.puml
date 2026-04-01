@@ -1,0 +1,39 @@
+@startuml
+actor "Nhân viên (Staff)" as Staff
+participant "ProductDetailDialog" as View
+participant "ProductController" as Controller
+participant "ProductService" as Service
+participant "ProductRepository" as Repo
+database "MySQL / JPA" as DB
+
+Staff -> View : Chọn sản phẩm từ danh sách
+Staff -> View : Click "Xem chi tiết"
+
+activate View
+View -> Controller : getProductDetails(productId)
+activate Controller
+
+Controller -> Service : getFullProductInfo(productId)
+activate Service
+
+' --- TRUY VẤN CHI TIẾT VÀ THUỘC TÍNH ---
+Service -> Repo : findProductWithAttributes(productId)
+activate Repo
+Repo -> DB : SELECT * FROM products p \nLEFT JOIN attributes a ON p.id = a.product_id \nWHERE p.id = ?
+activate DB
+DB --> Repo : ResultSet (Product + List of Attributes)
+deactivate DB
+Repo --> Service : Product Entity (with Attributes Collection)
+deactivate Repo
+
+Service --> Controller : ProductDetailDTO (Size, Color, Material,...)
+deactivate Service
+
+Controller --> View : Display Full Details
+View --> Staff : Hiển thị bảng thuộc tính (Size S: 5, Size M: 10,...)
+
+deactivate Controller
+deactivate View
+
+footer NGUYỄN MINH ĐẠO - STC-UTE - OOSE-2026
+@enduml
