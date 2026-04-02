@@ -4,8 +4,34 @@
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
              version="3.0">
     <persistence-unit name="salesmisPU" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        <class>com.example.salesmis.model.entity.Account</class>
+        <class>com.example.salesmis.model.entity.Admin</class>
+        <class>com.example.salesmis.model.entity.Category</class>
+        <class>com.example.salesmis.model.entity.Customer</class>
+        <class>com.example.salesmis.model.entity.ImportDetail</class>
+        <class>com.example.salesmis.model.entity.ImportReceipt</class>
+        <class>com.example.salesmis.model.entity.Inventory</class>
+        <class>com.example.salesmis.model.entity.OrderDetail</class>
+        <class>com.example.salesmis.model.entity.OrderEntity</class>
+        <class>com.example.salesmis.model.entity.Payment</class>
+        <class>com.example.salesmis.model.entity.Product</class>
+        <class>com.example.salesmis.model.entity.ProductAttribute</class>
+        <class>com.example.salesmis.model.entity.Staff</class>
+        <class>com.example.salesmis.model.entity.Supplier</class>
+        <class>com.example.salesmis.model.entity.Voucher</class>
         <properties>
-            <!-- Configure JDBC and JPA properties here -->
+            <!-- JPA standard properties -->
+            <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/shop_management?useSSL=false&amp;serverTimezone=UTC&amp;allowPublicKeyRetrieval=true"/>
+            <property name="jakarta.persistence.jdbc.user" value="root"/>
+            <property name="jakarta.persistence.jdbc.password" value="123456"/>
+
+            <!-- Hibernate properties -->
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
         </properties>
     </persistence-unit>
 </persistence>
