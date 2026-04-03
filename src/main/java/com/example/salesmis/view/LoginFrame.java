@@ -91,7 +91,7 @@ public class LoginFrame extends JFrame {
 
         JFrame dashboard;
         if ("admin".equals(role)) {
-            dashboard = new AdminDashboardFrame(account, orderController);
+            dashboard = new AdminDashboardFrame(account, orderController, productController);
         } else {
             dashboard = new StaffDashboardFrame(account, orderController, productController);
         }

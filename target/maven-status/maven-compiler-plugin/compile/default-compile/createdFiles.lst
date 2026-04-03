@@ -30,6 +30,7 @@ com\example\salesmis\model\entity\Category.class
 com\example\salesmis\controller\ProductController.class
 com\example\salesmis\model\dto\ProductDetailDTO$AttributeRow.class
 com\example\salesmis\service\OrderService.class
+com\example\salesmis\view\InvoicePanel$4.class
 com\example\salesmis\view\StaffDashboardFrame.class
 com\example\salesmis\view\InvoicePanel$1.class
 com\example\salesmis\config\JpaEntityManagerProvider.class
@@ -45,6 +46,7 @@ com\example\salesmis\config\EntityManagerProvider.class
 com\example\salesmis\model\entity\ImportReceipt.class
 com\example\salesmis\model\dto\InvoiceItemRequest.class
 com\example\salesmis\repository\InvoiceRepository.class
+com\example\salesmis\view\InvoicePanel$5.class
 com\example\salesmis\view\InvoicePanel$CartItem.class
 com\example\salesmis\repository\ProductRepository.class
 com\example\salesmis\model\dto\CreateInvoiceRequest.class
@@ -59,5 +61,6 @@ com\example\salesmis\view\ProductSearchPanel$2.class
 com\example\salesmis\service\ProductService.class
 com\example\salesmis\model\entity\Voucher.class
 com\example\salesmis\model\dto\ProductInventoryDTO.class
+com\example\salesmis\view\InvoicePanel$6.class
 com\example\salesmis\model\entity\OrderDetail.class
 com\example\salesmis\view\ProductSearchPanel$5.class

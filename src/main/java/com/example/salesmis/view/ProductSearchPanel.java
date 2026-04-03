@@ -34,29 +34,29 @@ import com.example.salesmis.model.dto.ProductInventoryDTO;
 /**
  * ProductSearchPanel – tab "Tìm kiếm sản phẩm" trong StaffDashboardFrame.
  * Theo UML sequence:
- *   Nhân viên → nhập từ khóa → bấm "Tìm kiếm"
- *     → searchProducts(keyword) → ProductController.findProducts(keyword)
- *     → hiển thị danh sách / thông báo không tìm thấy
- *   Nhân viên → chọn dòng → bấm "Xem chi tiết"
- *     → ProductDetailDialog.getProductDetails(productId)
+ * Nhân viên → nhập từ khóa → bấm "Tìm kiếm"
+ * → searchProducts(keyword) → ProductController.findProducts(keyword)
+ * → hiển thị danh sách / thông báo không tìm thấy
+ * Nhân viên → chọn dòng → bấm "Xem chi tiết"
+ * → ProductDetailDialog.getProductDetails(productId)
  */
 public class ProductSearchPanel extends JPanel {
 
-    private static final Color  BG_PANEL    = new Color(245, 246, 250);
-    private static final Color  ACCENT      = new Color(52, 120, 246);
-    private static final Color  BTN_DETAIL  = new Color(34, 170, 100);
-    private static final Font   TITLE_FONT  = new Font("Segoe UI", Font.BOLD, 20);
-    private static final Font   LABEL_FONT  = new Font("Segoe UI", Font.BOLD, 13);
-    private static final Font   PLAIN_FONT  = new Font("Segoe UI", Font.PLAIN, 13);
+    private static final Color BG_PANEL = new Color(245, 246, 250);
+    private static final Color ACCENT = new Color(52, 120, 246);
+    private static final Color BTN_DETAIL = new Color(34, 170, 100);
+    private static final Font TITLE_FONT = new Font("Segoe UI", Font.BOLD, 20);
+    private static final Font LABEL_FONT = new Font("Segoe UI", Font.BOLD, 13);
+    private static final Font PLAIN_FONT = new Font("Segoe UI", Font.PLAIN, 13);
 
     private final ProductController productController;
 
-    private JTextField           searchField;
-    private JButton              btnSearch;
-    private JButton              btnViewDetail;
-    private JLabel               statusLabel;
-    private JTable               resultTable;
-    private DefaultTableModel    tableModel;
+    private JTextField searchField;
+    private JButton btnSearch;
+    private JButton btnViewDetail;
+    private JLabel statusLabel;
+    private JTable resultTable;
+    private DefaultTableModel tableModel;
 
     // giữ productId theo từng row trong bảng để tránh phụ thuộc vào tên hiển thị
     private java.util.List<Integer> productIds = new java.util.ArrayList<>();
@@ -67,9 +67,9 @@ public class ProductSearchPanel extends JPanel {
         setLayout(new BorderLayout(0, 0));
         setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
 
-        add(buildTopPanel(),    BorderLayout.NORTH);
-        add(buildTablePanel(),  BorderLayout.CENTER);
-        add(buildStatusBar(),   BorderLayout.SOUTH);
+        add(buildTopPanel(), BorderLayout.NORTH);
+        add(buildTablePanel(), BorderLayout.CENTER);
+        add(buildStatusBar(), BorderLayout.SOUTH);
 
         // Load toàn bộ sản phẩm khi khởi tạo panel
         SwingUtilities.invokeLater(() -> runSearch(""));
@@ -81,7 +81,7 @@ public class ProductSearchPanel extends JPanel {
         wrapper.setBackground(BG_PANEL);
 
         // Title
-        JLabel title = new JLabel("🔍  Tìm kiếm sản phẩm");
+        JLabel title = new JLabel("Quản lý sản phẩm");
         title.setFont(TITLE_FONT);
         title.setForeground(new Color(30, 40, 80));
         wrapper.add(title, BorderLayout.NORTH);
@@ -101,7 +101,10 @@ public class ProductSearchPanel extends JPanel {
         // Enter → search
         searchField.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "doSearch");
         searchField.getActionMap().put("doSearch", new AbstractAction() {
-            @Override public void actionPerformed(ActionEvent e) { doSearch(); }
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                doSearch();
+            }
         });
 
         btnSearch = styledButton("Tìm kiếm", ACCENT);
@@ -123,9 +126,12 @@ public class ProductSearchPanel extends JPanel {
 
     // ===================== CENTER: kết quả dạng bảng =====================
     private JScrollPane buildTablePanel() {
-        String[] columns = {"Mã SP", "Tên sản phẩm", "Giá (₫)", "Tồn kho"};
+        String[] columns = { "Mã SP", "Tên sản phẩm", "Giá (₫)", "Tồn kho" };
         tableModel = new DefaultTableModel(columns, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
 
         resultTable = new JTable(tableModel);
@@ -153,8 +159,10 @@ public class ProductSearchPanel extends JPanel {
 
         // Double-click → mở chi tiết luôn
         resultTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2) openDetail();
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2)
+                    openDetail();
             }
         });
 
@@ -222,11 +230,11 @@ public class ProductSearchPanel extends JPanel {
         NumberFormat nf = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
 
         for (ProductInventoryDTO dto : results) {
-            tableModel.addRow(new Object[]{
-                dto.getProductCode() != null ? dto.getProductCode() : "—",
-                dto.getProductName() != null ? dto.getProductName() : "—",
-                dto.getBasePrice() != null ? nf.format(dto.getBasePrice()) : "—",
-                dto.getQuantityStock() != null ? dto.getQuantityStock() : 0
+            tableModel.addRow(new Object[] {
+                    dto.getProductCode() != null ? dto.getProductCode() : "—",
+                    dto.getProductName() != null ? dto.getProductName() : "—",
+                    dto.getBasePrice() != null ? nf.format(dto.getBasePrice()) : "—",
+                    dto.getQuantityStock() != null ? dto.getQuantityStock() : 0
             });
             productIds.add(dto.getProductId());
         }
@@ -234,7 +242,8 @@ public class ProductSearchPanel extends JPanel {
 
     private void openDetail() {
         int row = resultTable.getSelectedRow();
-        if (row < 0 || row >= productIds.size()) return;
+        if (row < 0 || row >= productIds.size())
+            return;
 
         Integer productId = productIds.get(row);
         JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
@@ -242,8 +251,13 @@ public class ProductSearchPanel extends JPanel {
         // Chạy trên background để không block UI khi tải
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         new SwingWorker<Void, Void>() {
-            @Override protected Void doInBackground() { return null; }
-            @Override protected void done() {
+            @Override
+            protected Void doInBackground() {
+                return null;
+            }
+
+            @Override
+            protected void done() {
                 setCursor(Cursor.getDefaultCursor());
                 try {
                     ProductDetailDialog dialog = new ProductDetailDialog(parent, productController, productId);

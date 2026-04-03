@@ -2,6 +2,7 @@ package com.example.salesmis.view;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
@@ -9,8 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -18,9 +21,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
 
 import com.example.salesmis.controller.OrderController;
+import com.example.salesmis.controller.ProductController;
 import com.example.salesmis.model.dto.CreateInvoiceRequest;
 import com.example.salesmis.model.dto.InvoiceItemRequest;
 import com.example.salesmis.model.dto.InvoiceSummaryDTO;
@@ -30,6 +38,7 @@ import com.example.salesmis.service.exception.InsufficientStockException;
 
 public class InvoicePanel extends JPanel {
     private final transient OrderController orderController;
+    private final transient ProductController productController;
     private final JTextField staffIdField;
     private final JTextField customerIdField;
     private final JTextField voucherIdField;
@@ -44,11 +53,14 @@ public class InvoicePanel extends JPanel {
     private final List<ProductInventoryDTO> productResults = new ArrayList<>();
     private final List<CartItem> cartItems = new ArrayList<>();
 
+    private JTable productTable; // kept as field for selection access
+
     private final NumberFormat currencyFormat = NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN"));
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    public InvoicePanel(OrderController orderController) {
+    public InvoicePanel(OrderController orderController, ProductController productController) {
         this.orderController = orderController;
+        this.productController = productController;
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
@@ -72,9 +84,18 @@ public class InvoicePanel extends JPanel {
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
         searchField = new JTextField(24);
         JButton searchButton = new JButton("Tim");
+        JButton detailButton = new JButton("Xem chi tiet");
+        detailButton.setEnabled(false);
         searchPanel.add(new JLabel("Tu khoa:"));
         searchPanel.add(searchField);
         searchPanel.add(searchButton);
+        searchPanel.add(detailButton);
+
+        // Enter key in search field triggers search
+        searchField.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "doSearch");
+        searchField.getActionMap().put("doSearch", new AbstractAction() {
+            @Override public void actionPerformed(java.awt.event.ActionEvent e) { loadProducts(); }
+        });
 
         productTableModel = new DefaultTableModel(new Object[] {"ID", "Ma SP", "Ten san pham", "Gia", "Ton kho"}, 0) {
             @Override
@@ -82,7 +103,23 @@ public class InvoicePanel extends JPanel {
                 return false;
             }
         };
-        JTable productTable = new JTable(productTableModel);
+        productTable = new JTable(productTableModel);
+        productTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        // Enable/disable detail button based on row selection
+        productTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                detailButton.setEnabled(productTable.getSelectedRow() >= 0);
+            }
+        });
+
+        // Double-click on product row opens detail
+        productTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) openProductDetail();
+            }
+        });
+
         productPanel.add(searchPanel, BorderLayout.NORTH);
         productPanel.add(new JScrollPane(productTable), BorderLayout.CENTER);
 
@@ -143,6 +180,7 @@ public class InvoicePanel extends JPanel {
         removeFromCartButton.addActionListener(e -> removeCartItem(cartTable.getSelectedRow()));
         createInvoiceButton.addActionListener(e -> createInvoice());
         refreshHistoryButton.addActionListener(e -> loadRecentInvoices());
+        detailButton.addActionListener(e -> openProductDetail());
 
         loadProducts();
         loadRecentInvoices();
@@ -152,17 +190,40 @@ public class InvoicePanel extends JPanel {
         productTableModel.setRowCount(0);
         productResults.clear();
 
-        List<ProductInventoryDTO> products = orderController.searchProducts(searchField.getText().trim());
-        productResults.addAll(products);
-        for (ProductInventoryDTO product : productResults) {
-            productTableModel.addRow(new Object[] {
-                    product.getProductId(),
-                    product.getProductCode(),
-                    product.getProductName(),
-                    formatMoney(product.getBasePrice()),
-                    product.getQuantityStock()
-            });
-        }
+        String keyword = searchField.getText().trim();
+        new SwingWorker<List<ProductInventoryDTO>, Void>() {
+            @Override
+            protected List<ProductInventoryDTO> doInBackground() {
+                return orderController.searchProducts(keyword);
+            }
+            @Override
+            protected void done() {
+                try {
+                    List<ProductInventoryDTO> products = get();
+                    productResults.addAll(products);
+                    for (ProductInventoryDTO product : productResults) {
+                        productTableModel.addRow(new Object[] {
+                                product.getProductId(),
+                                product.getProductCode(),
+                                product.getProductName(),
+                                formatMoney(product.getBasePrice()),
+                                product.getQuantityStock()
+                        });
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(InvoicePanel.this,
+                            "Loi tai san pham: " + ex.getMessage(), "Loi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    private void openProductDetail() {
+        int row = productTable.getSelectedRow();
+        if (row < 0 || row >= productResults.size()) return;
+        Integer productId = productResults.get(row).getProductId();
+        JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
+        new ProductDetailDialog(parent, productController, productId).setVisible(true);
     }
 
     private void addSelectedProductToCart(int selectedProductRow) {

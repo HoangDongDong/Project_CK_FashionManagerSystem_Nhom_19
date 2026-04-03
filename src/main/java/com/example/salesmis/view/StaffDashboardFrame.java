@@ -34,8 +34,8 @@ public class StaffDashboardFrame extends JFrame {
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Tong quan", homePanel);
-        tabbedPane.addTab("Lap hoa don", new InvoicePanel(orderController));
-        tabbedPane.addTab("Tim kiem san pham", new ProductSearchPanel(productController));
+        tabbedPane.addTab("Lap hoa don", new InvoicePanel(orderController, productController));
+        tabbedPane.addTab("San pham", new ProductSearchPanel(productController));
         add(tabbedPane);
     }
 }
