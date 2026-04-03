@@ -14,4 +14,6 @@ public interface ProductRepository extends GenericRepository<Product, Integer> {
     int getStockQuantity(EntityManager entityManager, Integer productId);
     boolean hasEnoughStock(EntityManager entityManager, Integer productId, int requiredQuantity);
     void decreaseStock(EntityManager entityManager, Integer productId, int quantity);
+    // findProductWithAttributes: LEFT JOIN to load attributes collection eagerly
+    Optional<Product> findProductWithAttributes(EntityManager entityManager, Integer productId);
 }

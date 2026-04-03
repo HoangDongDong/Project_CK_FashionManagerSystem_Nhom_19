@@ -74,6 +74,17 @@ public class ProductRepositoryImpl extends AbstractJpaRepository<Product, Intege
     }
 
     @Override
+    public Optional<Product> findProductWithAttributes(EntityManager entityManager, Integer productId) {
+        // LEFT JOIN FETCH to eagerly load attributes in one query (avoids N+1)
+        return entityManager.createQuery(
+                "SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.attributes LEFT JOIN FETCH p.inventory WHERE p.productId = :id",
+                Product.class)
+                .setParameter("id", productId)
+                .getResultStream()
+                .findFirst();
+    }
+
+    @Override
     public void decreaseStock(EntityManager entityManager, Integer productId, int quantity) {
         Inventory inventory = entityManager.createQuery(
                         "SELECT i FROM Inventory i WHERE i.product.productId = :productId", Inventory.class)

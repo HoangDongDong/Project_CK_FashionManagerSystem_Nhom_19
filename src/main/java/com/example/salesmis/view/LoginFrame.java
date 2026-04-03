@@ -16,19 +16,22 @@ import javax.swing.SwingUtilities;
 
 import com.example.salesmis.controller.AuthController;
 import com.example.salesmis.controller.OrderController;
+import com.example.salesmis.controller.ProductController;
 import com.example.salesmis.model.entity.Account;
 import com.example.salesmis.service.exception.AuthenticationException;
 
 public class LoginFrame extends JFrame {
     private final transient AuthController authController;
     private final transient OrderController orderController;
+    private final transient ProductController productController;
     private final JTextField usernameField;
     private final JPasswordField passwordField;
     private final JButton loginButton;
 
-    public LoginFrame(AuthController authController, OrderController orderController) {
+    public LoginFrame(AuthController authController, OrderController orderController, ProductController productController) {
         this.authController = authController;
         this.orderController = orderController;
+        this.productController = productController;
 
         setTitle("Fashion Shop - Login");
         setSize(420, 220);
@@ -90,16 +93,16 @@ public class LoginFrame extends JFrame {
         if ("admin".equals(role)) {
             dashboard = new AdminDashboardFrame(account, orderController);
         } else {
-            dashboard = new StaffDashboardFrame(account, orderController);
+            dashboard = new StaffDashboardFrame(account, orderController, productController);
         }
 
         dashboard.setVisible(true);
         dispose();
     }
 
-    public static void show(AuthController authController, OrderController orderController) {
+    public static void show(AuthController authController, OrderController orderController, ProductController productController) {
         SwingUtilities.invokeLater(() -> {
-            LoginFrame frame = new LoginFrame(authController, orderController);
+            LoginFrame frame = new LoginFrame(authController, orderController, productController);
             frame.setVisible(true);
         });
     }
