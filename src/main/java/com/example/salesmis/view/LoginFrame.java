@@ -14,9 +14,12 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import jakarta.persistence.PersistenceException;
+
 import com.example.salesmis.controller.AuthController;
 import com.example.salesmis.controller.OrderController;
 import com.example.salesmis.controller.ProductController;
+import com.example.salesmis.controller.VoucherController;
 import com.example.salesmis.model.entity.Account;
 import com.example.salesmis.service.exception.AuthenticationException;
 
@@ -24,14 +27,17 @@ public class LoginFrame extends JFrame {
     private final transient AuthController authController;
     private final transient OrderController orderController;
     private final transient ProductController productController;
+    private final transient VoucherController voucherController;
     private final JTextField usernameField;
     private final JPasswordField passwordField;
     private final JButton loginButton;
 
-    public LoginFrame(AuthController authController, OrderController orderController, ProductController productController) {
+    public LoginFrame(AuthController authController, OrderController orderController, ProductController productController,
+            VoucherController voucherController) {
         this.authController = authController;
         this.orderController = orderController;
         this.productController = productController;
+        this.voucherController = voucherController;
 
         setTitle("Fashion Shop - Login");
         setSize(420, 220);
@@ -81,8 +87,15 @@ public class LoginFrame extends JFrame {
             openDashboardByRole(account);
         } catch (AuthenticationException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Dang nhap that bai", JOptionPane.ERROR_MESSAGE);
+        } catch (PersistenceException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Khong ket noi duoc database. Kiem tra MySQL dang chay, ten DB shop_management,\n"
+                            + "va mat khau trong persistence.xml hoac -Djakarta.persistence.jdbc.password=...\n"
+                            + "Chi tiet: " + rootMessage(ex),
+                    "Loi ket noi",
+                    JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Loi he thong: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Loi he thong: " + rootMessage(ex), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -91,18 +104,28 @@ public class LoginFrame extends JFrame {
 
         JFrame dashboard;
         if ("admin".equals(role)) {
-            dashboard = new AdminDashboardFrame(account, orderController, productController);
+            dashboard = new AdminDashboardFrame(account, orderController, productController, voucherController);
         } else {
-            dashboard = new StaffDashboardFrame(account, orderController, productController);
+            dashboard = new StaffDashboardFrame(account, orderController, productController, voucherController);
         }
 
         dashboard.setVisible(true);
         dispose();
     }
 
-    public static void show(AuthController authController, OrderController orderController, ProductController productController) {
+    private static String rootMessage(Throwable ex) {
+        Throwable t = ex;
+        while (t.getCause() != null && t.getCause() != t) {
+            t = t.getCause();
+        }
+        String msg = t.getMessage();
+        return msg != null ? msg : t.getClass().getSimpleName();
+    }
+
+    public static void show(AuthController authController, OrderController orderController, ProductController productController,
+            VoucherController voucherController) {
         SwingUtilities.invokeLater(() -> {
-            LoginFrame frame = new LoginFrame(authController, orderController, productController);
+            LoginFrame frame = new LoginFrame(authController, orderController, productController, voucherController);
             frame.setVisible(true);
         });
     }

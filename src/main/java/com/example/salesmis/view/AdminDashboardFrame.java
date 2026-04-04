@@ -12,10 +12,12 @@ import javax.swing.SwingConstants;
 
 import com.example.salesmis.controller.OrderController;
 import com.example.salesmis.controller.ProductController;
+import com.example.salesmis.controller.VoucherController;
 import com.example.salesmis.model.entity.Account;
 
 public class AdminDashboardFrame extends JFrame {
-    public AdminDashboardFrame(Account account, OrderController orderController, ProductController productController) {
+    public AdminDashboardFrame(Account account, OrderController orderController, ProductController productController,
+            VoucherController voucherController) {
         setTitle("Fashion Shop - Admin Dashboard");
         setSize(960, 640);
         setLocationRelativeTo(null);
@@ -34,7 +36,7 @@ public class AdminDashboardFrame extends JFrame {
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Tong quan", homePanel);
-        tabbedPane.addTab("Lap hoa don", new InvoicePanel(orderController, productController));
+        tabbedPane.addTab("Lap hoa don", new InvoicePanel(orderController, productController, voucherController));
         add(tabbedPane);
     }
 }

@@ -16,7 +16,8 @@ public class AccountRepositoryImpl extends AbstractJpaRepository<Account, Intege
 
     @Override
     public Optional<Account> findByUsername(EntityManager entityManager, String username) {
-        return entityManager.createQuery("SELECT a FROM Account a WHERE a.username = :username", Account.class)
+        return entityManager
+                .createQuery("SELECT a FROM Account a WHERE LOWER(TRIM(a.username)) = LOWER(TRIM(:username))", Account.class)
                 .setParameter("username", username)
                 .getResultStream()
                 .findFirst();

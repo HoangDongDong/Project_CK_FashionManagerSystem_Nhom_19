@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import com.example.salesmis.config.EntityManagerProvider;
 import com.example.salesmis.model.dto.CreateInvoiceRequest;
+import com.example.salesmis.model.dto.DiscountResult;
 import com.example.salesmis.model.dto.InvoiceSummaryDTO;
 import com.example.salesmis.model.dto.InvoiceItemRequest;
 import com.example.salesmis.model.dto.ProductInventoryDTO;
@@ -20,6 +21,7 @@ import com.example.salesmis.model.entity.Voucher;
 import com.example.salesmis.repository.InvoiceRepository;
 import com.example.salesmis.repository.ProductRepository;
 import com.example.salesmis.service.OrderService;
+import com.example.salesmis.service.VoucherService;
 import com.example.salesmis.service.exception.InsufficientStockException;
 
 import jakarta.persistence.EntityManager;
@@ -28,14 +30,17 @@ import jakarta.persistence.EntityTransaction;
 public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final InvoiceRepository invoiceRepository;
+    private final VoucherService voucherService;
     private final EntityManagerProvider entityManagerProvider;
 
     public OrderServiceImpl(
             ProductRepository productRepository,
             InvoiceRepository invoiceRepository,
+            VoucherService voucherService,
             EntityManagerProvider entityManagerProvider) {
         this.productRepository = productRepository;
         this.invoiceRepository = invoiceRepository;
+        this.voucherService = voucherService;
         this.entityManagerProvider = entityManagerProvider;
     }
 
@@ -125,11 +130,6 @@ public class OrderServiceImpl implements OrderService {
             Customer customer = entityManager.getReference(Customer.class, request.getCustomerId());
             order.setCustomer(customer);
         }
-        if (request.getVoucherId() != null) {
-            Voucher voucher = entityManager.getReference(Voucher.class, request.getVoucherId());
-            order.setVoucher(voucher);
-        }
-
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (InvoiceItemRequest item : request.getItems()) {
             Product product = productRepository.findById(entityManager, item.getProductId())
@@ -149,9 +149,18 @@ public class OrderServiceImpl implements OrderService {
             totalAmount = totalAmount.add(subtotal);
         }
 
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        BigDecimal finalTotal = totalAmount;
+        if (request.getVoucherId() != null) {
+            DiscountResult applied = voucherService.validateAndCalculateForOrder(request.getVoucherId(), totalAmount);
+            discountAmount = applied.getDiscountAmount();
+            finalTotal = applied.getNewTotal();
+            order.setVoucher(entityManager.getReference(Voucher.class, request.getVoucherId()));
+        }
+
         order.setTotalAmount(totalAmount);
-        order.setDiscountAmount(BigDecimal.ZERO);
-        order.setFinalTotal(totalAmount);
+        order.setDiscountAmount(discountAmount);
+        order.setFinalTotal(finalTotal);
         return order;
     }
 

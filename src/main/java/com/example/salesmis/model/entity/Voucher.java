@@ -39,6 +39,14 @@ public class Voucher {
     @Column(name = "usage_limit")
     private Integer usageLimit;
 
+    /** ACTIVE = hop le theo sequence diagram; null coi nhu ACTIVE (du lieu cu). */
+    @Column(name = "status", length = 20)
+    private String status;
+
+    /** Gia tri don toi thieu de ap dung ma (MinOrderValue). */
+    @Column(name = "min_order_value", precision = 10, scale = 2)
+    private BigDecimal minOrderValue;
+
     @OneToMany(mappedBy = "voucher")
     private List<OrderEntity> orders = new ArrayList<>();
 
@@ -56,6 +64,10 @@ public class Voucher {
     public void setEndDate(LocalDateTime endDate) { this.endDate = endDate; }
     public Integer getUsageLimit() { return usageLimit; }
     public void setUsageLimit(Integer usageLimit) { this.usageLimit = usageLimit; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public BigDecimal getMinOrderValue() { return minOrderValue; }
+    public void setMinOrderValue(BigDecimal minOrderValue) { this.minOrderValue = minOrderValue; }
     public List<OrderEntity> getOrders() { return orders; }
     public void setOrders(List<OrderEntity> orders) { this.orders = orders; }
 }

@@ -35,12 +35,13 @@ public class AuthServiceImpl implements AuthService {
                 throw new AuthenticationException("Tai khoan da bi khoa");
             }
 
-            if (!password.equals(account.getPasswordHash())) {
+            String storedHash = account.getPasswordHash();
+            if (storedHash == null || !storedHash.equals(password)) {
                 throw new AuthenticationException("Sai ten dang nhap hoac mat khau");
             }
 
-            // Update login timestamp as required by the login sequence.
-            accountRepository.updateLastLogin(entityManager, account.getAccountId(), LocalDateTime.now());
+            // Cap nhat last_login tren entity dang managed (tranh loi JPQL UPDATE / cot thieu).
+            account.setLastLogin(LocalDateTime.now());
             transaction.commit();
             return account;
         } catch (RuntimeException ex) {
