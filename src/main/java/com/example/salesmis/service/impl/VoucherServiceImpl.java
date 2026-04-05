@@ -93,6 +93,9 @@ public class VoucherServiceImpl implements VoucherService {
         if (v.getEndDate() != null && now.isAfter(v.getEndDate())) {
             sb.append(" | [HET HAN]");
         }
+        if (v.getUsageLimit() != null && v.getUsageLimit() <= 0) {
+            sb.append(" | [HET LUOT SU DUNG]");
+        }
 
         return new VoucherListItemDTO(v.getVoucherId(), code, sb.toString());
     }
@@ -116,6 +119,10 @@ public class VoucherServiceImpl implements VoucherService {
         }
         if (voucher.getEndDate() != null && now.isAfter(voucher.getEndDate())) {
             throw new InvalidVoucherException("Ma khong hop le hoac het han");
+        }
+
+        if (voucher.getUsageLimit() != null && voucher.getUsageLimit() <= 0) {
+            throw new InvalidVoucherException("Mã giảm giá đã hết lượt sử dụng");
         }
 
         BigDecimal total = normalizeTotal(currentOrderTotal);
@@ -155,5 +162,114 @@ public class VoucherServiceImpl implements VoucherService {
             raw = value;
         }
         return raw.min(orderTotal).max(BigDecimal.ZERO);
+    }
+
+    @Override
+    public List<com.example.salesmis.model.dto.VoucherDTO> getVoucherList() {
+        EntityManager em = entityManagerProvider.createEntityManager();
+        try {
+            return voucherRepository.findAllOrderByIdDesc(em).stream().map(v -> {
+                com.example.salesmis.model.dto.VoucherDTO dto = new com.example.salesmis.model.dto.VoucherDTO();
+                dto.setVoucherId(v.getVoucherId());
+                dto.setCode(v.getCode());
+                dto.setDiscountValue(v.getDiscountValue());
+                dto.setDiscountType(v.getDiscountType());
+                dto.setStartDate(v.getStartDate());
+                dto.setEndDate(v.getEndDate());
+                dto.setUsageLimit(v.getUsageLimit());
+                dto.setStatus(v.getStatus() == null ? "ACTIVE" : v.getStatus());
+                dto.setMinOrderValue(v.getMinOrderValue());
+                return dto;
+            }).toList();
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public void addVoucher(com.example.salesmis.model.dto.VoucherDTO dto) {
+        EntityManager em = entityManagerProvider.createEntityManager();
+        jakarta.persistence.EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            if (voucherRepository.checkCodeExists(em, dto.getCode())) {
+                throw new IllegalArgumentException("Mã Voucher đã tồn tại: " + dto.getCode());
+            }
+
+            Voucher voucher = new Voucher();
+            voucher.setCode(dto.getCode());
+            voucher.setDiscountValue(dto.getDiscountValue());
+            voucher.setDiscountType(dto.getDiscountType());
+            voucher.setStartDate(dto.getStartDate());
+            voucher.setEndDate(dto.getEndDate());
+            if (dto.getUsageLimit() != null && dto.getUsageLimit() > 0) {
+                voucher.setUsageLimit(dto.getUsageLimit());
+            }
+            voucher.setMinOrderValue(dto.getMinOrderValue());
+            voucher.setStatus("ACTIVE");
+
+            em.persist(voucher);
+            tx.commit();
+        } catch (RuntimeException e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public void editVoucher(Integer id, com.example.salesmis.model.dto.VoucherDTO dto) {
+        EntityManager em = entityManagerProvider.createEntityManager();
+        jakarta.persistence.EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            Voucher voucher = voucherRepository.findById(em, id)
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy Voucher: " + id));
+
+            // Chỉ cập nhật nếu code mơi khác code hiện tại và code mới chưa tồn tại
+            if (!voucher.getCode().equalsIgnoreCase(dto.getCode())) {
+                if (voucherRepository.checkCodeExists(em, dto.getCode())) {
+                    throw new IllegalArgumentException("Mã Voucher đã tồn tại: " + dto.getCode());
+                }
+                voucher.setCode(dto.getCode());
+            }
+
+            voucher.setDiscountValue(dto.getDiscountValue());
+            voucher.setDiscountType(dto.getDiscountType());
+            voucher.setStartDate(dto.getStartDate());
+            voucher.setEndDate(dto.getEndDate());
+            if (dto.getUsageLimit() != null && dto.getUsageLimit() >= 0) {
+                voucher.setUsageLimit(dto.getUsageLimit());
+            }
+            voucher.setMinOrderValue(dto.getMinOrderValue());
+
+            em.merge(voucher);
+            tx.commit();
+        } catch (RuntimeException e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public void setVoucherInactive(Integer id) {
+        EntityManager em = entityManagerProvider.createEntityManager();
+        jakarta.persistence.EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            Voucher voucher = voucherRepository.findById(em, id)
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy Voucher: " + id));
+            voucher.setStatus("INACTIVE");
+            em.merge(voucher);
+            tx.commit();
+        } catch (RuntimeException e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        } finally {
+            em.close();
+        }
     }
 }

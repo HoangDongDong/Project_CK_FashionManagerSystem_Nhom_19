@@ -22,4 +22,16 @@ public class ProductController {
     public ProductDetailDTO getProductDetails(Integer productId) {
         return productService.getFullProductInfo(productId);
     }
+
+    public void addProduct(com.example.salesmis.model.dto.ProductDTO productDTO) {
+        productService.createNewProduct(productDTO);
+    }
+
+    public void updateProduct(Integer productId, com.example.salesmis.model.dto.ProductDTO productDTO) {
+        productService.editProduct(productId, productDTO);
+    }
+
+    public void deleteProduct(Integer productId) {
+        productService.softDeleteProduct(productId);
+    }
 }

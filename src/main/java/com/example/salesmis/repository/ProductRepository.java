@@ -14,6 +14,10 @@ public interface ProductRepository extends GenericRepository<Product, Integer> {
     int getStockQuantity(EntityManager entityManager, Integer productId);
     boolean hasEnoughStock(EntityManager entityManager, Integer productId, int requiredQuantity);
     void decreaseStock(EntityManager entityManager, Integer productId, int quantity);
+    long countByCategoryId(EntityManager entityManager, Integer categoryId);
     // findProductWithAttributes: LEFT JOIN to load attributes collection eagerly
     Optional<Product> findProductWithAttributes(EntityManager entityManager, Integer productId);
+    void setProductInactive(EntityManager entityManager, Integer productId);
+    Product saveFullProduct(EntityManager entityManager, Product product);
+    List<com.example.salesmis.model.dto.LowStockAlertDTO> getLowStockAlerts(EntityManager entityManager);
 }

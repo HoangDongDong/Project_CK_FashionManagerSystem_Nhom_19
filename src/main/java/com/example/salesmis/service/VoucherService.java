@@ -19,4 +19,10 @@ public interface VoucherService {
 
     /** Danh sach ma giam gia de chon tren man hinh lap hoa don. */
     List<VoucherListItemDTO> listVouchersForSelection();
+
+    // Administrative methods
+    List<com.example.salesmis.model.dto.VoucherDTO> getVoucherList();
+    void addVoucher(com.example.salesmis.model.dto.VoucherDTO voucherDTO);
+    void editVoucher(Integer id, com.example.salesmis.model.dto.VoucherDTO voucherDTO);
+    void setVoucherInactive(Integer id);
 }

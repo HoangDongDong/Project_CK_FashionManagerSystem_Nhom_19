@@ -37,4 +37,30 @@ public class VoucherRepositoryImpl extends AbstractJpaRepository<Voucher, Intege
                         Voucher.class)
                 .getResultList();
     }
+
+    @Override
+    public List<Voucher> findAllOrderByIdDesc(EntityManager entityManager) {
+        return entityManager.createQuery("SELECT v FROM Voucher v ORDER BY v.voucherId DESC", Voucher.class).getResultList();
+    }
+
+    @Override
+    public boolean checkCodeExists(EntityManager entityManager, String code) {
+        if (code == null || code.isBlank()) return false;
+        Long count = entityManager.createQuery("SELECT COUNT(v) FROM Voucher v WHERE LOWER(TRIM(v.code)) = LOWER(:code)", Long.class)
+                .setParameter("code", code.trim())
+                .getSingleResult();
+        return count != null && count > 0;
+    }
+
+    @Override
+    public List<com.example.salesmis.model.entity.Voucher> getExpiringVouchers(EntityManager entityManager, int daysAhead) {
+        String jpql = "SELECT v FROM Voucher v WHERE v.status = 'ACTIVE' AND v.endDate >= :now AND v.endDate <= :maxDate ORDER BY v.endDate ASC";
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.LocalDateTime maxDate = now.plusDays(daysAhead);
+        
+        return entityManager.createQuery(jpql, com.example.salesmis.model.entity.Voucher.class)
+                .setParameter("now", now)
+                .setParameter("maxDate", maxDate)
+                .getResultList();
+    }
 }

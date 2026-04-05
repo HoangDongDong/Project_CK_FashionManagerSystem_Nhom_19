@@ -53,4 +53,10 @@ public class AuthServiceImpl implements AuthService {
             entityManager.close();
         }
     }
+
+    @Override
+    public void logout(String username) {
+        // Desktop app mock session invalidation
+        System.out.println("User " + username + " logged out and session caching cleared.");
+    }
 }

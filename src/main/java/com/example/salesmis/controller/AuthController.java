@@ -13,4 +13,8 @@ public class AuthController {
     public Account login(String username, String password) {
         return authService.authenticate(username, password);
     }
+
+    public void logout(String username) {
+        authService.logout(username);
+    }
 }

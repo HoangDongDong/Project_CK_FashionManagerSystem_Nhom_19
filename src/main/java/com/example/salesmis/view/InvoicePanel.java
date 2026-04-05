@@ -32,6 +32,10 @@ import javax.swing.table.DefaultTableModel;
 import com.example.salesmis.controller.OrderController;
 import com.example.salesmis.controller.ProductController;
 import com.example.salesmis.controller.VoucherController;
+import com.example.salesmis.controller.CustomerController;
+import com.example.salesmis.model.entity.Account;
+import com.example.salesmis.model.dto.CustomerDTO;
+import com.example.salesmis.model.dto.CustomerListItemDTO;
 import com.example.salesmis.model.dto.CreateInvoiceRequest;
 import com.example.salesmis.model.dto.DiscountResult;
 import com.example.salesmis.model.dto.InvoiceItemRequest;
@@ -47,8 +51,9 @@ public class InvoicePanel extends JPanel {
     private final transient OrderController orderController;
     private final transient ProductController productController;
     private final transient VoucherController voucherController;
+    private final transient CustomerController customerController;
     private final JTextField staffIdField;
-    private final JTextField customerIdField;
+    private final JComboBox<CustomerListItemDTO> customerIdCombo;
     private final JComboBox<VoucherListItemDTO> voucherCombo;
     private final JTextField noteField;
     private final JTextField searchField;
@@ -71,21 +76,28 @@ public class InvoicePanel extends JPanel {
     private final JLabel lblDiscount;
     private final JLabel lblFinalTotal;
 
-    public InvoicePanel(OrderController orderController, ProductController productController, VoucherController voucherController) {
+    public InvoicePanel(Account account, OrderController orderController, ProductController productController, VoucherController voucherController, CustomerController customerController) {
         this.orderController = orderController;
         this.productController = productController;
         this.voucherController = voucherController;
+        this.customerController = customerController;
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
         JPanel orderInfoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
         staffIdField = new JTextField(7);
-        customerIdField = new JTextField(7);
+        if (account != null && account.getStaff() != null && account.getStaff().getStaffId() != null) {
+            staffIdField.setText(String.valueOf(account.getStaff().getStaffId()));
+            staffIdField.setEditable(false);
+        }
+        
+        customerIdCombo = new JComboBox<>();
+        customerIdCombo.setPreferredSize(new Dimension(300, 26));
         noteField = new JTextField(20);
         orderInfoPanel.add(new JLabel("Staff ID:"));
         orderInfoPanel.add(staffIdField);
-        orderInfoPanel.add(new JLabel("Customer ID:"));
-        orderInfoPanel.add(customerIdField);
+        orderInfoPanel.add(new JLabel("Khach hang:"));
+        orderInfoPanel.add(customerIdCombo);
         orderInfoPanel.add(new JLabel("Note:"));
         orderInfoPanel.add(noteField);
 
@@ -117,6 +129,7 @@ public class InvoicePanel extends JPanel {
         applyVoucherButton.addActionListener(e -> handleApplyVoucher());
         reloadVouchersButton.addActionListener(e -> loadVoucherComboItems());
         loadVoucherComboItems();
+        loadCustomerComboItems();
         resetVoucherSummaryLabels();
 
         JPanel productPanel = new JPanel(new BorderLayout(6, 6));
@@ -367,6 +380,23 @@ public class InvoicePanel extends JPanel {
         }
     }
 
+    private void loadCustomerComboItems() {
+        try {
+            List<CustomerDTO> list = customerController.getAllCustomers();
+            customerIdCombo.removeAllItems();
+            customerIdCombo.addItem(CustomerListItemDTO.placeholder());
+            for (CustomerDTO dto : list) {
+                if (Boolean.TRUE.equals(dto.getIsActive())) {
+                    String dName = dto.getCustomerId() + " - " + dto.getCustomerName() + " (" + dto.getPhone() + ")";
+                    customerIdCombo.addItem(new CustomerListItemDTO(dto.getCustomerId(), dName));
+                }
+            }
+            customerIdCombo.setSelectedIndex(0);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Khong tai duoc danh sach khach hang: " + ex.getMessage(), "Loi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void handleApplyVoucher() {
         if (cartItems.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Gio hang dang trong, khong the ap dung voucher", "Thong bao",
@@ -415,7 +445,13 @@ public class InvoicePanel extends JPanel {
 
         CreateInvoiceRequest request = new CreateInvoiceRequest();
         request.setStaffId(parseNullableInteger(staffIdField.getText()));
-        request.setCustomerId(parseNullableInteger(customerIdField.getText()));
+
+        Object selectedCustomerObj = customerIdCombo.getSelectedItem();
+        if (selectedCustomerObj instanceof CustomerListItemDTO selectedCustomer && !selectedCustomer.isPlaceholder()) {
+            request.setCustomerId(selectedCustomer.getCustomerId());
+        } else {
+            request.setCustomerId(null);
+        }
         request.setVoucherId(appliedVoucherId);
         request.setNote(noteField.getText().trim());
 

@@ -35,6 +35,9 @@ public class Customer {
     @Column(name = "loyalty_points")
     private Integer loyaltyPoints = 0;
 
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -53,6 +56,8 @@ public class Customer {
     public void setAddress(String address) { this.address = address; }
     public Integer getLoyaltyPoints() { return loyaltyPoints; }
     public void setLoyaltyPoints(Integer loyaltyPoints) { this.loyaltyPoints = loyaltyPoints; }
+    public Boolean getIsActive() { return isActive; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public List<OrderEntity> getOrders() { return orders; }

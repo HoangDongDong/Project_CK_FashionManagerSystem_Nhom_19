@@ -10,35 +10,85 @@ import javax.swing.JTabbedPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
+import javax.swing.JButton;
+import java.awt.FlowLayout;
+
+import com.example.salesmis.controller.AuthController;
 import com.example.salesmis.controller.OrderController;
 import com.example.salesmis.controller.ProductController;
 import com.example.salesmis.controller.VoucherController;
+import com.example.salesmis.controller.StaffController;
+import com.example.salesmis.controller.ReportController;
+import com.example.salesmis.controller.CustomerController;
+import com.example.salesmis.controller.DashboardController;
+import com.example.salesmis.controller.ImportController;
 import com.example.salesmis.model.entity.Account;
 
 public class StaffDashboardFrame extends JFrame {
-    public StaffDashboardFrame(Account account, OrderController orderController, ProductController productController,
-            VoucherController voucherController) {
-        setTitle("Fashion Shop - Staff Dashboard");
+    public StaffDashboardFrame(Account account, AuthController authController, OrderController orderController,
+            ProductController productController, VoucherController voucherController,
+            com.example.salesmis.controller.StaffController staffController,
+            com.example.salesmis.controller.ReportController reportController, com.example.salesmis.controller.CustomerController customerController,
+            com.example.salesmis.controller.DashboardController dashboardController,
+            com.example.salesmis.controller.ImportController importController,
+            com.example.salesmis.controller.CategoryController categoryController) {
+        
+        super("Fashion Shop - Staff Dashboard");
         setSize(960, 640);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JLabel title = new JLabel("STAFF DASHBOARD", SwingConstants.CENTER);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        title.setFont(new Font("Serif", Font.BOLD, 26));
+        title.setForeground(java.awt.Color.decode("#C28E61"));
 
-        JLabel welcome = new JLabel("Xin chao, " + account.getUsername(), SwingConstants.CENTER);
-        welcome.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        JLabel welcome = new JLabel("Xin chào, " + account.getUsername(), SwingConstants.CENTER);
+        welcome.setFont(new Font("SansSerif", Font.PLAIN, 16));
 
-        JPanel homePanel = new JPanel(new BorderLayout());
-        homePanel.setBorder(BorderFactory.createEmptyBorder(60, 20, 60, 20));
-        homePanel.add(title, BorderLayout.CENTER);
-        homePanel.add(welcome, BorderLayout.SOUTH);
+        JButton btnLogout = new JButton("Đăng xuất");
+        btnLogout.setBackground(java.awt.Color.WHITE);
+        btnLogout.setForeground(java.awt.Color.decode("#C28E61"));
+        btnLogout.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btnLogout.addActionListener(e -> {
+            authController.logout(account.getUsername());
+            dispose();
+            LoginFrame.show(authController, orderController, productController, voucherController, staffController, reportController, customerController, dashboardController, importController, categoryController);
+        });
+
+        JPanel welcomePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+        welcomePanel.setBackground(java.awt.Color.WHITE);
+        welcomePanel.add(welcome);
+        welcomePanel.add(btnLogout);
+
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(java.awt.Color.WHITE);
+        headerPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, java.awt.Color.decode("#E0E0E0")),
+            BorderFactory.createEmptyBorder(15, 25, 15, 25)
+        ));
+        title.setHorizontalAlignment(SwingConstants.LEFT);
+        headerPanel.add(title, BorderLayout.WEST);
+        headerPanel.add(welcomePanel, BorderLayout.EAST);
 
         JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.addTab("Tong quan", homePanel);
-        tabbedPane.addTab("Lap hoa don", new InvoicePanel(orderController, productController, voucherController));
-        tabbedPane.addTab("San pham", new ProductSearchPanel(productController));
-        add(tabbedPane);
+        tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        tabbedPane.addTab("Tong quan", new StaffHomePanel(account));
+        tabbedPane.addTab("Lap hoa don", new InvoicePanel(account, orderController, productController, voucherController, customerController));
+        
+        if (customerController != null) {
+            tabbedPane.addTab("Khach hang", new CustomerManagementPanel(customerController));
+        }
+        
+        if (productController != null) {
+            tabbedPane.addTab("Quan ly San pham", new ProductManagementPanel(productController, categoryController));
+        }
+
+        if (importController != null) {
+            tabbedPane.addTab("Nhap hang", new ImportPanel(importController));
+        }
+        
+        add(headerPanel, BorderLayout.NORTH);
+        add(tabbedPane, BorderLayout.CENTER);
     }
 }
 

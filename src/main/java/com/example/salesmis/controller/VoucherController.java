@@ -24,4 +24,20 @@ public class VoucherController {
     public List<VoucherListItemDTO> listVouchersForInvoice() {
         return voucherService.listVouchersForSelection();
     }
+
+    public List<com.example.salesmis.model.dto.VoucherDTO> getAllVouchers() {
+        return voucherService.getVoucherList();
+    }
+
+    public void createVoucher(com.example.salesmis.model.dto.VoucherDTO voucherDTO) {
+        voucherService.addVoucher(voucherDTO);
+    }
+
+    public void updateVoucher(Integer id, com.example.salesmis.model.dto.VoucherDTO updateDTO) {
+        voucherService.editVoucher(id, updateDTO);
+    }
+
+    public void disableVoucher(Integer id) {
+        voucherService.setVoucherInactive(id);
+    }
 }

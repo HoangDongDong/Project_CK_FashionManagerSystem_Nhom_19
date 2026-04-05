@@ -102,4 +102,39 @@ public class ProductRepositoryImpl extends AbstractJpaRepository<Product, Intege
         inventory.setLastUpdated(LocalDateTime.now());
         entityManager.merge(inventory);
     }
+
+    @Override
+    public void setProductInactive(EntityManager entityManager, Integer productId) {
+        Product p = entityManager.find(Product.class, productId);
+        if (p != null) {
+            p.setIsActive(false);
+            entityManager.merge(p);
+        }
+    }
+
+    @Override
+    public Product saveFullProduct(EntityManager entityManager, Product product) {
+        if (product.getProductId() == null) {
+            entityManager.persist(product);
+        } else {
+            product = entityManager.merge(product);
+        }
+        return product;
+    }
+
+    @Override
+    public List<com.example.salesmis.model.dto.LowStockAlertDTO> getLowStockAlerts(EntityManager entityManager) {
+        String jpql = "SELECT new com.example.salesmis.model.dto.LowStockAlertDTO(p.productCode, p.productName, i.quantityStock, i.minStockLevel) " +
+                      "FROM Inventory i JOIN i.product p " +
+                      "WHERE i.quantityStock <= i.minStockLevel AND (p.isActive = true OR p.isActive IS NULL)";
+        return entityManager.createQuery(jpql, com.example.salesmis.model.dto.LowStockAlertDTO.class).getResultList();
+    }
+
+    @Override
+    public long countByCategoryId(EntityManager entityManager, Integer categoryId) {
+        Long count = entityManager.createQuery("SELECT COUNT(p) FROM Product p WHERE p.category.categoryId = :categoryId", Long.class)
+                .setParameter("categoryId", categoryId)
+                .getSingleResult();
+        return count != null ? count : 0L;
+    }
 }

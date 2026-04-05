@@ -155,7 +155,15 @@ public class OrderServiceImpl implements OrderService {
             DiscountResult applied = voucherService.validateAndCalculateForOrder(request.getVoucherId(), totalAmount);
             discountAmount = applied.getDiscountAmount();
             finalTotal = applied.getNewTotal();
-            order.setVoucher(entityManager.getReference(Voucher.class, request.getVoucherId()));
+            
+            Voucher voucher = entityManager.find(Voucher.class, request.getVoucherId());
+            if (voucher.getUsageLimit() != null) {
+                if (voucher.getUsageLimit() <= 0) {
+                    throw new IllegalArgumentException("Mã Voucher đã hết lượt sử dụng!");
+                }
+                voucher.setUsageLimit(voucher.getUsageLimit() - 1);
+            }
+            order.setVoucher(voucher);
         }
 
         order.setTotalAmount(totalAmount);

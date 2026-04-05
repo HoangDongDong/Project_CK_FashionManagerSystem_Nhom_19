@@ -10,4 +10,7 @@ public interface ProductService {
     List<ProductInventoryDTO> findProducts(String keyword);
     // getFullProductInfo: lấy thông tin đầy đủ kèm danh sách thuộc tính
     ProductDetailDTO getFullProductInfo(Integer productId);
+    void createNewProduct(com.example.salesmis.model.dto.ProductDTO productDTO);
+    void editProduct(Integer productId, com.example.salesmis.model.dto.ProductDTO productDTO);
+    void softDeleteProduct(Integer productId);
 }

@@ -15,4 +15,13 @@ public interface VoucherRepository extends GenericRepository<Voucher, Integer> {
 
     /** Tat ca voucher co ma (sap xep theo code) de hien thi tren giao dien chon. */
     List<Voucher> findAllWithCodeOrderByCode(EntityManager entityManager);
+
+    /** Lay danh sach vouchers sap xep moi nhat */
+    List<Voucher> findAllOrderByIdDesc(EntityManager entityManager);
+
+    /** Kiem tra ma code da ton tai chua */
+    boolean checkCodeExists(EntityManager entityManager, String code);
+
+    /** Lay cac voucher sap het han trong khoang daysAhead ngay (tinh ca hien tai) */
+    List<Voucher> getExpiringVouchers(EntityManager entityManager, int daysAhead);
 }
