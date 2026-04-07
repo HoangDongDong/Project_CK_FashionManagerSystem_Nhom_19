@@ -60,7 +60,7 @@ mvn clean compile
 ### Bước 4: Chạy Ứng dụng
 Bạn có thể chạy dự án bằng lệnh Maven:
 ```bash
-mvn exec:java -Dexec.mainClass="com.example.salesmis.AppLauncher"
+mvn compile exec:java "-Dexec.mainClass=com.example.salesmis.AppLauncher"
 ```
 *Hoặc mở dự án bằng IDE (VS Code, IntelliJ IDEA, Eclipse) và nhấn `Run` ở file `AppLauncher.java`.*
 
