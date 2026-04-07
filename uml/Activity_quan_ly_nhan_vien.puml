@@ -1,0 +1,26 @@
+@startuml
+title Activity Diagram: Quản lý Nhân viên & Khách hàng
+skinparam conditionStyle inside
+
+start
+:Admin mở danh sách quản lý;
+if (Chọn hành động?) then (Thêm mới)
+    :Nhập thông tin (Tên, SĐT, Địa chỉ...);
+    :Hệ thống kiểm tra trùng SĐT;
+    if (Đã tồn tại?) then (Có)
+        :Thông báo lỗi trùng dữ liệu;
+    else (Không)
+        :INSERT thông tin mới;
+    endif
+else if (Sửa thông tin) then
+    :Hiển thị form dữ liệu hiện tại;
+    :Nhập thông tin thay đổi;
+    :Hệ thống thực hiện UPDATE (save entity);
+else (Khóa / Blacklist)
+    :Cập nhật trạng thái is_active = false;
+    :Ngừng quyền truy cập/giao dịch;
+endif
+:Thông báo trạng thái thành công;
+:Reload danh sách dữ liệu;
+stop
+@enduml

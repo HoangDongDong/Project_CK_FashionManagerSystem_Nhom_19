@@ -1,0 +1,29 @@
+@startuml
+title Activity Diagram: Thống kê Doanh thu & Hóa đơn
+skinparam conditionStyle inside
+skinparam theme plain
+
+start
+:Chọn khoảng thời gian (Từ ngày - Đến ngày);
+:Chọn Nhân viên (Một người cụ thể hoặc Tất cả);
+:Nhấn "Xem thống kê";
+
+:Truy vấn danh sách hóa đơn theo bộ lọc;
+note right: WHERE date BETWEEN ? AND ? \nAND (staff_id = ? OR ALL)
+
+if (Có dữ liệu?) then (Có)
+    fork
+        :Tính tổng doanh thu (Total Revenue);
+    fork again
+        :Tổng hợp dữ liệu theo ngày (Chart Data);
+    fork again
+        :Đóng gói danh sách hóa đơn chi tiết;
+    end fork
+    :Đóng gói kết quả vào ReportDTO;
+    :Hiển thị Biểu đồ và Bảng dữ liệu;
+else (Không)
+    :Thông báo "Không có dữ liệu trong khoảng thời gian này";
+endif
+
+stop
+@enduml

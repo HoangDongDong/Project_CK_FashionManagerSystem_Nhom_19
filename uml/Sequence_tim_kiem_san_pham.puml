@@ -1,0 +1,52 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Nhân viên (Staff)" as Staff
+participant "ProductSearchPanel" as UI
+participant "ProductController" as Controller
+participant "ProductService" as Service
+participant "ProductRepository" as Repo
+database "MySQL / JPA" as Database
+
+' --- Luồng xử lý ---
+Staff -> UI : Nhập từ khóa (Tên/Mã SP)
+Staff -> UI : Nhấn "Tìm kiếm"
+
+UI -> Controller : searchProducts(keyword)
+activate Controller
+
+Controller -> Service : findProducts(keyword)
+activate Service
+
+Service -> Repo : findByNameOrCode(keyword)
+activate Repo
+
+Repo -> Database : SELECT * FROM products WHERE name LIKE %?% OR code = ?
+activate Database
+Database -->> Repo : ResultSet (Danh sách sản phẩm)
+deactivate Database
+
+Repo -->> Service : List<ProductObject>
+deactivate Repo
+
+' --- Khối điều kiện Alt ---
+alt Không tìm thấy sản phẩm
+    Service -->> Controller : return Empty List
+    Controller -->> UI : Hiển thị thông báo "Không tìm thấy sản phẩm"
+
+else Tìm thấy sản phẩm
+    Service -->> Controller : List<ProductDTO>
+    deactivate Service
+
+    Controller -->> UI : Hiển thị danh sách sản phẩm lên Table/Grid
+    deactivate Controller
+
+    UI -->> Staff : Hiển thị kết quả tìm kiếm
+end
+
+@enduml

@@ -1,0 +1,109 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Quản lý (Admin)" as Admin
+participant "CategoryPanel" as UI
+participant "CategoryController" as Controller
+participant "CategoryService" as Service
+participant "CategoryRepository" as CategoryRepo
+participant "ProductRepository" as ProductRepo
+database "MySQL" as DB
+
+' --- NGHIỆP VỤ: THÊM DANH MỤC ---
+Admin -> UI : Nhập tên danh mục và nhấn "Lưu"
+activate UI
+UI -> Controller : createCategory(dto)
+activate Controller
+Controller -> Service : addCategory(dto)
+activate Service
+Service -> CategoryRepo : findByName(dto.category_name)
+activate CategoryRepo
+CategoryRepo -> DB : SELECT * FROM Category WHERE name = ?
+activate DB
+DB -->> CategoryRepo : null (Chưa tồn tại)
+deactivate DB
+CategoryRepo -->> Service : null
+deactivate CategoryRepo
+
+alt Tên danh mục chưa tồn tại
+    Service -> CategoryRepo : save(entity)
+    activate CategoryRepo
+    CategoryRepo -> DB : INSERT INTO Category...
+    activate DB
+    DB -->> CategoryRepo : Success
+    deactivate DB
+    CategoryRepo -->> Service : Saved Entity
+    deactivate CategoryRepo
+    Service -->> Controller : SuccessDTO
+    Controller -->> UI : Hiển thị "Thêm thành công"
+
+else Tên danh mục đã tồn tại
+    Service -->> Controller : throw DuplicateException
+    Controller -->> UI : Trả về lỗi 400 (Trùng tên)
+    UI -->> Admin : Thông báo "Tên danh mục đã tồn tại"
+end
+deactivate Service
+deactivate Controller
+
+' --- NGHIỆP VỤ: XÓA DANH MỤC ---
+Admin -> UI : Chọn danh mục & nhấn "Xóa"
+UI -> Controller : deleteCategory(categoryId)
+activate Controller
+Controller -> Service : deleteCategory(categoryId)
+activate Service
+Service -> ProductRepo : countByCategoryId(categoryId)
+activate ProductRepo
+ProductRepo -> DB : SELECT COUNT(*) FROM Product WHERE category_id = ?
+activate DB
+DB -->> ProductRepo : Result (số lượng SP)
+deactivate DB
+ProductRepo -->> Service : count
+deactivate ProductRepo
+
+alt count > 0 (Còn sản phẩm)
+    Service -->> Controller : throw CategoryNotEmptyException
+    Controller -->> UI : Trả về lỗi 400 (Constraint Error)
+    UI -->> Admin : Lỗi: "Danh mục còn sản phẩm, hãy chuyển SP trước khi xóa"
+
+else count == 0 (Danh mục trống)
+    Service -> CategoryRepo : deleteById(categoryId)
+    activate CategoryRepo
+    CategoryRepo -> DB : DELETE FROM Category WHERE category_id = ?
+    activate DB
+    DB -->> CategoryRepo : Success
+    deactivate DB
+    CategoryRepo -->> Service : OK
+    deactivate CategoryRepo
+    Service -->> Controller : Success
+    Controller -->> UI : Hiển thị "Xóa thành công"
+end
+deactivate Service
+deactivate Controller
+
+' --- NGHIỆP VỤ: SỬA DANH MỤC ---
+Admin -> UI : Thay đổi tên/mô tả và nhấn "Cập nhật"
+UI -> Controller : updateCategory(id, dto)
+activate Controller
+Controller -> Service : editCategory(id, dto)
+activate Service
+Service -> CategoryRepo : save(updatedEntity)
+activate CategoryRepo
+CategoryRepo -> DB : UPDATE Category SET ... WHERE category_id = ?
+activate DB
+DB -->> CategoryRepo : Success
+deactivate DB
+CategoryRepo -->> Service : OK
+deactivate CategoryRepo
+Service -->> Controller : Success
+Controller -->> UI : Hiển thị "Cập nhật thành công"
+deactivate Service
+deactivate Controller
+
+deactivate UI
+
+@enduml

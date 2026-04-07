@@ -1,0 +1,28 @@
+@startuml
+title Activity Diagram: Load Dashboard & Xem Thống kê
+skinparam conditionStyle inside
+
+start
+:Admin mở Dashboard hoặc trang Thống kê;
+:Chọn bộ lọc (Thời gian, Nhân viên);
+
+fork
+    :Truy vấn tổng doanh thu & số đơn hàng;
+fork again
+    :Truy vấn tổng số khách hàng;
+fork again
+    :Lọc danh sách sản phẩm sắp hết hàng;
+fork again
+    :Lọc danh sách Voucher sắp hết hạn;
+end fork
+
+:Tổng hợp dữ liệu vào DashboardDTO/ReportDTO;
+
+fork
+    :Vẽ biểu đồ xu hướng doanh thu;
+fork again
+    :Hiển thị danh sách hóa đơn chi tiết;
+end fork
+
+stop
+@enduml

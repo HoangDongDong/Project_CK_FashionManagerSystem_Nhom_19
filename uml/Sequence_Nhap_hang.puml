@@ -1,0 +1,82 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Nhân viên / Quản lý\n(Staff / Admin)" as User
+participant "ImportPanel\n(Giao diện)" as UI
+participant "ImportController" as Controller
+participant "ImportService" as Service
+participant "ImportRepository" as ImportRepo
+participant "InventoryRepository" as InventoryRepo
+database "MySQL / JPA" as DB
+
+' --- Luồng chuẩn bị sản phẩm ---
+User -> UI : Mở màn hình Nhập hàng\nTìm kiếm sản phẩm
+UI -->> User : Không tìm thấy sản phẩm
+
+User -> UI : Nhấn "Tạo SP mới" và Nhập thông tin
+activate UI
+note over UI : Sử dụng lại logic của\nmodule Quản lý Sản phẩm
+
+ref over UI, DB : Gọi luồng Use Case: Thêm Sản phẩm mới (Add Product)
+
+UI -->> User : Tự động thêm SP mới vào Danh sách phiếu nhập
+
+' --- Luồng lưu phiếu nhập ---
+User -> UI : Nhập số lượng, giá nhập và Nhấn "Lưu Phiếu"
+UI -> Controller : createImportReceipt(importDTO)
+activate Controller
+
+Controller -> Service : processImport(importDTO)
+activate Service
+
+' --- Transaction bắt đầu ---
+Service -> ImportRepo : Bắt đầu Transaction (@Transactional)
+activate ImportRepo
+
+Service -> ImportRepo : save(importReceiptEntity)
+ImportRepo -> DB : INSERT INTO ImportReceipt...
+activate DB
+DB -->> ImportRepo : Trả về receipt_id
+deactivate DB
+ImportRepo -->> Service : Saved Receipt
+
+' --- Vòng lặp cập nhật sản phẩm và kho ---
+loop Cho mỗi sản phẩm trong importDTO.items
+    Service -> ImportRepo : save(ImportDetailEntity)
+    activate ImportRepo
+    ImportRepo -> DB : INSERT INTO ImportDetail...
+    activate DB
+    DB -->> ImportRepo : Success
+    deactivate DB
+    ImportRepo -->> Service : OK
+    deactivate ImportRepo
+
+    Service -> InventoryRepo : addStock(product_id, quantity)
+    activate InventoryRepo
+    InventoryRepo -> DB : UPDATE Inventory SET quantity_stock = quantity_stock + ?...
+    activate DB
+    DB -->> InventoryRepo : Success
+    deactivate DB
+    InventoryRepo -->> Service : OK
+    deactivate InventoryRepo
+end
+
+Service -> ImportRepo : Kết thúc Transaction (Commit)
+deactivate ImportRepo
+
+' --- Phản hồi ---
+Service -->> Controller : SuccessDTO
+deactivate Service
+
+Controller -->> UI : HTTP 200 OK
+deactivate Controller
+
+UI -->> User : Thông báo "Nhập hàng thành công" và Làm mới form
+deactivate UI
+
+@enduml

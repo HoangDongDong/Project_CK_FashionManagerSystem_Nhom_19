@@ -1,0 +1,35 @@
+@startuml
+title Activity Diagram: Nhập hàng
+skinparam conditionStyle inside
+skinparam theme plain
+
+start
+:Tìm kiếm sản phẩm;
+if (Tìm thấy sản phẩm?) then (Không)
+    partition "Ref: Thêm nhanh sản phẩm" {
+        :Nhập thông tin sản phẩm mới;
+        :Lưu sản phẩm vào hệ thống;
+    }
+else (Có)
+endif
+
+:Thêm vào danh sách phiếu nhập;
+:Nhập số lượng & Giá nhập;
+:Nhấn "Lưu Phiếu";
+
+partition "Transaction: Cập nhật dữ liệu" {
+    :Khởi tạo Transaction;
+    :Lưu thông tin Phiếu nhập;
+
+    repeat :Cho mỗi sản phẩm trong danh sách;
+        :Lưu chi tiết phiếu nhập (ImportDetail);
+        :Cập nhật cộng dồn số lượng tồn kho;
+    repeat while (Còn sản phẩm?) is (Có)
+
+    :Kết thúc & Commit Transaction;
+}
+
+:Thông báo "Nhập hàng thành công";
+:Làm mới form nhập liệu;
+stop
+@enduml

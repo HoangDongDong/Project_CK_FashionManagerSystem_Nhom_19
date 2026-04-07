@@ -1,0 +1,113 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Quản lý\n(Admin)" as Admin
+participant "VoucherManagementPanel\n(Giao diện)" as UI
+participant "VoucherController" as Controller
+participant "VoucherService" as Service
+participant "VoucherRepository" as Repo
+database "MySQL / JPA" as DB
+
+' --- HIỂN THỊ DANH SÁCH VOUCHER (MAIN FLOW) ---
+== HIỂN THỊ DANH SÁCH VOUCHER (MAIN FLOW) ==
+
+Admin -> UI : 1. Click menu "Quản lý Khuyến mãi"
+activate UI
+UI -> Controller : 2. getAllVouchers()
+activate Controller
+Controller -> Service : 3. getVoucherList()
+activate Service
+Service -> Repo : 4. findAll()
+activate Repo
+Repo -> DB : 5. SELECT * FROM vouchers ORDER BY created_at DESC
+activate DB
+DB -->> Repo : 6. Trả về tập dữ liệu
+deactivate DB
+Repo -->> Service : 7. List<VoucherEntity>
+deactivate Repo
+Service -->> Controller : 8. List<VoucherDTO>
+deactivate Service
+Controller -->> UI : 9. Trả về danh sách
+deactivate Controller
+UI -->> Admin : 10. Hiển thị danh sách Voucher lên bảng
+deactivate UI
+
+' --- CÁC THAO TÁC QUẢN LÝ (EXTENSION FLOWS) ---
+== CÁC THAO TÁC QUẢN LÝ (EXTENSION FLOWS) ==
+
+Admin -> UI : Chọn hành động (Thêm / Sửa / Khóa)
+activate UI
+
+alt Action: Thêm mã giảm giá mới
+    Admin -> UI : Nhập Code, % giảm, Đơn tối thiểu... & Nhấn "Lưu"
+    UI -> Controller : createVoucher(voucherDTO)
+    activate Controller
+    Controller -> Service : addVoucher(voucherDTO)
+    activate Service
+    Service -> Repo : checkCodeExists(code)
+    activate Repo
+    Repo -->> Service : false (Hợp lệ, chưa tồn tại)
+    deactivate Repo
+    Service -> Repo : save(entity) status="ACTIVE"
+    activate Repo
+    Repo -> DB : INSERT INTO vouchers...
+    activate DB
+    DB -->> Repo : Success (Generated ID)
+    deactivate DB
+    Repo -->> Service : SavedVoucher
+    deactivate Repo
+    Service -->> Controller : SuccessDTO
+    deactivate Service
+    Controller -->> UI : Trả về trạng thái OK
+    deactivate Controller
+    UI -->> Admin : "Tạo mã thành công" & Làm mới danh sách
+
+else Action: Sửa điều kiện Voucher
+    Admin -> UI : Sửa thông tin (Hạn dùng, % giảm...) & Nhấn "Lưu"
+    UI -> Controller : updateVoucher(id, updateDTO)
+    activate Controller
+    Controller -> Service : editVoucher(id, updateDTO)
+    activate Service
+    Service -> Repo : save(entity) JPA merge
+    activate Repo
+    Repo -> DB : UPDATE vouchers SET... WHERE id = ?
+    activate DB
+    DB -->> Repo : Success
+    deactivate DB
+    Repo -->> Service : UpdatedVoucher
+    deactivate Repo
+    Service -->> Controller : SuccessDTO
+    deactivate Service
+    Controller -->> UI : Trả về trạng thái OK
+    deactivate Controller
+    UI -->> Admin : "Cập nhật thành công" & Làm mới danh sách
+
+else Action: Khóa / Vô hiệu hóa Voucher
+    Admin -> UI : Chọn Voucher & Nhấn "Khóa"
+    UI -> Controller : disableVoucher(id)
+    activate Controller
+    Controller -> Service : setVoucherInactive(id)
+    activate Service
+    Service -> Repo : updateStatus(id, 'INACTIVE')
+    activate Repo
+    Repo -> DB : UPDATE vouchers SET status='INACTIVE' WHERE id=?
+    activate DB
+    DB -->> Repo : Success
+    deactivate DB
+    Repo -->> Service : Trả về kết quả
+    deactivate Repo
+    Service -->> Controller : SuccessDTO
+    deactivate Service
+    Controller -->> UI : Trả về trạng thái OK
+    deactivate Controller
+    UI -->> Admin : "Voucher đã bị vô hiệu hóa" & Làm mới danh sách
+end
+
+deactivate UI
+
+@enduml

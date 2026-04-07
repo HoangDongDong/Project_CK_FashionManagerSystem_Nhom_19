@@ -1,0 +1,39 @@
+@startuml
+title Activity Diagram: Lập hóa đơn bán hàng
+skinparam conditionStyle inside
+
+start
+repeat
+    :Nhập mã sản phẩm và số lượng;
+    :Hệ thống kiểm tra tồn kho (validateStock);
+
+    if (Đủ hàng trong kho?) then (Không)
+        :Hiển thị lỗi "Không đủ hàng";
+    else (Có)
+        :Thêm sản phẩm vào danh sách chờ thanh toán;
+    endif
+repeat while (Tiếp tục thêm sản phẩm?) is (Có)
+
+:Nhân viên nhập SĐT khách hàng;
+:Nhấn "Xác nhận thanh toán";
+
+partition "Quy trình xử lý Giao dịch (Transaction)" {
+    :Bắt đầu Transaction;
+
+    :Kiểm tra thông tin khách hàng;
+    if (Khách hàng đã tồn tại?) then (Không)
+        :Tự động đăng ký khách hàng mới;
+    else (Có)
+        :Gán thông tin khách hàng vào hóa đơn;
+    endif
+
+    :Lưu Hóa đơn (Order) và Chi tiết hóa đơn (OrderDetail);
+    :Cập nhật giảm số lượng tồn kho (decreaseStock);
+
+    :Kết thúc & Commit Transaction;
+}
+
+:Hiển thị thông báo thành công;
+:Hệ thống hỗ trợ In hóa đơn;
+stop
+@enduml

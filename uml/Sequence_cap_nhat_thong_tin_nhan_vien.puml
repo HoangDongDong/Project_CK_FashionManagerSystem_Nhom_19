@@ -1,0 +1,52 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Quản lý (Admin)" as Admin
+participant "StaffManagementPanel\n(Giao diện)" as UI
+participant "StaffController" as Controller
+participant "StaffService" as Service
+participant "StaffRepository" as Repo
+database "MySQL / JPA" as DB
+
+' --- Luồng xử lý ---
+Admin -> UI : Chọn nhân viên & nhấn "Sửa/Cập nhật"
+activate UI
+UI -->> Admin : Hiển thị form thông tin hiện tại
+deactivate UI
+
+Admin -> UI : Đổi thông tin (Họ tên, SĐT, Chức vụ...) & nhấn "Lưu thay đổi"
+activate UI
+
+UI -> Controller : updateStaff(id, dto)
+activate Controller
+
+Controller -> Service : updateStaff(id, dto)
+activate Service
+
+Service -> Repo : save(entity)
+activate Repo
+note left of Repo : JPA tự hiểu là update nếu ID đã tồn tại
+
+Repo -> DB : UPDATE Staff SET name=?, phone=?, ... WHERE id=?
+activate DB
+DB -->> Repo : Trạng thái cập nhật thành công
+deactivate DB
+
+Repo -->> Service : Trả về Entity đã lưu
+deactivate Repo
+
+Service -->> Controller : Trả về kết quả Success
+deactivate Service
+
+Controller -->> UI : Phản hồi HTTP Success
+deactivate Controller
+
+UI -->> Admin : Thông báo "Cập nhật thông tin thành công"\nLàm mới danh sách
+deactivate UI
+
+@enduml

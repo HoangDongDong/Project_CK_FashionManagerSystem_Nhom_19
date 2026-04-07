@@ -1,0 +1,24 @@
+@startuml
+title Activity Diagram: Xem chi tiết thuộc tính sản phẩm
+skinparam conditionStyle inside
+skinparam theme plain
+
+start
+:Nhân viên chọn một sản phẩm từ danh sách;
+:Nhấn nút "Xem chi tiết";
+
+partition "Hệ thống xử lý" {
+    :Gửi yêu cầu getProductDetails(productId);
+    :Truy vấn đa bảng (Join Product & Attributes);
+    note right: SELECT * FROM products p \nLEFT JOIN attributes a ...
+
+    if (Tìm thấy dữ liệu thuộc tính?) then (Có)
+        :Ánh xạ dữ liệu sang ProductDetailDTO;
+        :Hiển thị bảng thuộc tính (Size, Color, Material...);
+    else (Không)
+        :Hiển thị thông báo "Sản phẩm chưa có thuộc tính";
+    endif
+}
+
+stop
+@enduml

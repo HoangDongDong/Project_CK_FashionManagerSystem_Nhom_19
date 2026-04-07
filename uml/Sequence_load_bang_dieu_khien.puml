@@ -1,0 +1,88 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Quản lý\n(Admin)" as Admin
+participant "DashboardPanel\n(Giao diện)" as UI
+participant "DashboardController" as Controller
+participant "DashboardService" as Service
+participant "OrderRepo" as OrderRepo
+participant "CustomerRepo" as CustomerRepo
+participant "InventoryRepo" as InventoryRepo
+participant "VoucherRepo" as VoucherRepo
+database "MySQL" as DB
+
+' --- Luồng xử lý ---
+Admin -> UI : Mở trang Dashboard\n(Chọn bộ lọc: Ngày/Tuần)
+activate UI
+
+UI -> Controller : getDashboardData(timeFilter)
+activate Controller
+
+Controller -> Service : fetchSummary(timeFilter)
+activate Service
+
+' 1. Lấy Doanh thu và Số đơn
+Service -> OrderRepo : getRevenueAndOrderCount(timeFilter)
+activate OrderRepo
+OrderRepo -> DB : SELECT SUM(final_total), COUNT(order_id) FROM 'Order'...
+activate DB
+DB -->> OrderRepo : Result
+deactivate DB
+OrderRepo -->> Service : Revenue & Order Count
+deactivate OrderRepo
+
+' 2. Lấy Tổng số khách hàng
+Service -> CustomerRepo : getTotalCustomers(timeFilter)
+activate CustomerRepo
+CustomerRepo -> DB : SELECT COUNT(customer_id) FROM Customer...
+activate DB
+DB -->> CustomerRepo : Result
+deactivate DB
+CustomerRepo -->> Service : Customer Count
+deactivate CustomerRepo
+
+' 3. Lấy Cảnh báo sắp hết hàng
+Service -> InventoryRepo : getLowStockAlerts()
+activate InventoryRepo
+InventoryRepo -> DB : SELECT * FROM Inventory WHERE quantity_stock <= min_stock_level
+activate DB
+DB -->> InventoryRepo : Result
+deactivate DB
+InventoryRepo -->> Service : List<LowStockProduct>
+deactivate InventoryRepo
+
+' 4. Lấy Voucher sắp hết hạn
+Service -> VoucherRepo : getExpiringVouchers()
+activate VoucherRepo
+VoucherRepo -> DB : SELECT * FROM Voucher WHERE end_date BETWEEN NOW() AND [3 ngày tới]
+activate DB
+DB -->> VoucherRepo : Result
+deactivate DB
+VoucherRepo -->> Service : List<ExpiringVoucher>
+deactivate VoucherRepo
+
+' 5. Lấy Dữ liệu biểu đồ
+Service -> OrderRepo : getRevenueChartData(timeFilter)
+activate OrderRepo
+OrderRepo -> DB : SELECT DATE(order_date), SUM(final_total) FROM 'Order' GROUP BY DATE...
+activate DB
+DB -->> OrderRepo : Result
+deactivate DB
+OrderRepo -->> Service : ChartData (Ngày -> Doanh thu)
+deactivate OrderRepo
+
+Service -->> Controller : DashboardDTO
+deactivate Service
+
+Controller -->> UI : Trả về trạng thái OK kèm JSON Data
+deactivate Controller
+
+UI -->> Admin : Hiển thị Thẻ số liệu, Cảnh báo\n& Vẽ Biểu đồ doanh thu
+deactivate UI
+
+@enduml

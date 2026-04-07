@@ -1,0 +1,80 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Nhân viên (Staff)" as Staff
+participant "ProductManagementPanel" as UI
+participant "ProductController" as Controller
+participant "ProductService" as Service
+participant "ProductRepository" as Repo
+database "MySQL / JPA" as Database
+
+' --- Khối điều kiện Alt cho các thao tác Quản lý ---
+alt [Action: Thêm sản phẩm mới]
+    Staff -> UI : Nhập thông tin SP, Thuộc tính & SL kho
+    activate UI
+    UI -> Controller : addProduct(productDTO)
+    activate Controller
+    Controller -> Service : createNewProduct(productDTO)
+    activate Service
+    Service -> Repo : saveFullProduct(entity)
+    activate Repo
+    Repo -> Database : INSERT INTO Product, ProductAttribute, Inventory
+    activate Database
+    Database -->> Repo : Success (Generated ID)
+    deactivate Database
+    Repo -->> Service : return SavedProduct
+    deactivate Repo
+    Service -->> Controller : SuccessDTO
+    deactivate Service
+    Controller -->> UI : Hiển thị "Thêm sản phẩm thành công"
+    deactivate Controller
+
+else [Action: Sửa thông tin sản phẩm]
+    Staff -> UI : Thay đổi giá, size hoặc mô tả
+    activate UI
+    UI -> Controller : updateProduct(productId, updateDTO)
+    activate Controller
+    Controller -> Service : editProduct(productId, updateDTO)
+    activate Service
+    Service -> Repo : updateProductAndAttributes(id, dto)
+    activate Repo
+    Repo -> Database : UPDATE Product, ProductAttribute
+    activate Database
+    Database -->> Repo : Updated
+    deactivate Database
+    Repo -->> Service : Success
+    deactivate Repo
+    Service -->> Controller : Success
+    deactivate Service
+    Controller -->> UI : Hiển thị "Cập nhật thành công"
+    deactivate Controller
+
+else [Action: Xóa sản phẩm]
+    Staff -> UI : Chọn sản phẩm & Nhấn "Xóa"
+    activate UI
+    UI -> Controller : deleteProduct(productId)
+    activate Controller
+    Controller -> Service : softDeleteProduct(productId)
+    activate Service
+    Service -> Repo : setProductInactive(productId)
+    activate Repo
+    Repo -> Database : UPDATE Product SET is_active = false WHERE id = ?
+    activate Database
+    Database -->> Repo : Success
+    deactivate Database
+    Repo -->> Service : Success
+    deactivate Repo
+    Service -->> Controller : Success
+    deactivate Service
+    Controller -->> UI : Hiển thị "Sản phẩm đã được ngừng kinh doanh"
+    deactivate Controller
+end
+
+deactivate UI
+
+@enduml

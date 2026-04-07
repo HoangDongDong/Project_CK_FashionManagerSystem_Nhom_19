@@ -1,0 +1,43 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "User\n(Staff / Admin)" as User
+participant "MainPanel" as MainPanel
+participant "AuthController" as AuthController
+participant "AuthService" as AuthService
+participant "LoginPanel" as LoginPanel
+
+' --- Luồng xử lý ---
+User -> MainPanel : Click nút "Đăng xuất" (Logout)
+activate MainPanel
+
+MainPanel -> AuthController : logout(sessionId)
+activate AuthController
+
+AuthController -> AuthService : invalidateSession(sessionId)
+activate AuthService
+
+note right of AuthService : Hệ thống hủy phiên làm việc (Session)\nhoặc xóa Token tại Server.
+
+AuthService -->> AuthController : LogoutResult (Success)
+deactivate AuthService
+
+AuthController -->> MainPanel : Phản hồi thành công
+deactivate AuthController
+
+MainPanel -> MainPanel : Xóa dữ liệu phiên làm việc\ntại Local (Clear Cache)
+
+MainPanel -> LoginPanel : Chuyển hướng (Redirect)
+activate LoginPanel
+
+LoginPanel -->> User : Hiển thị màn hình Đăng nhập\nThông báo "Đã đăng xuất"
+deactivate LoginPanel
+
+deactivate MainPanel
+
+@enduml

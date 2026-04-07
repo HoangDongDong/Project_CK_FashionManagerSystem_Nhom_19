@@ -1,0 +1,49 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Quản lý (Admin)" as Admin
+participant "ReportPanel" as UI
+participant "ReportController" as Controller
+participant "ReportService" as Service
+participant "OrderRepository" as Repo
+database "MySQL" as Database
+
+' --- Luồng xử lý ---
+Admin -> UI : Chọn khoảng thời gian (Ngày/Tháng/Năm)
+Admin -> UI : Nhấn "Xem thống kê"
+activate UI
+
+UI -> Controller : getRevenueReport(startDate, endDate)
+activate Controller
+
+Controller -> Service : calculateTotalRevenue(startDate, endDate)
+activate Service
+
+Service -> Repo : findOrdersInPeriod(startDate, endDate)
+activate Repo
+
+Repo -> Database : SELECT * FROM 'Order' WHERE order_date BETWEEN...
+activate Database
+Database -->> Repo : List<OrderEntity>
+deactivate Database
+
+Repo -->> Service : List<Order>
+deactivate Repo
+
+' --- Các bước xử lý nội bộ tại Service ---
+Service -> Service : Tính tổng final_total & Thống kê theo ngày
+Service -->> Controller : ReportDTO (TotalRevenue, ChartData)
+deactivate Service
+
+Controller -->> UI : Hiển thị biểu đồ & Bảng doanh thu
+deactivate Controller
+
+UI -->> Admin : Xem báo cáo chi tiết
+deactivate UI
+
+@enduml

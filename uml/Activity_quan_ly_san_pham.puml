@@ -1,0 +1,39 @@
+@startuml
+title Activity Diagram: Quản lý Sản phẩm & Danh mục
+skinparam conditionStyle inside
+
+start
+:Nhân viên truy cập màn hình quản lý;
+
+if (Hành động?) then (Tìm kiếm / Xem danh sách)
+    :Nhập từ khóa (Tên/Mã);
+    :Hệ thống truy vấn (is_active = true);
+    :Hiển thị kết quả lên bảng;
+    if (Xem chi tiết?) then (Có)
+        :Truy vấn Product + Attributes (Join);
+        :Hiển thị bảng thuộc tính (Size, Màu...);
+    endif
+
+else if (Thêm / Sửa) then
+    :Nhập/Thay đổi thông tin;
+    :Kiểm tra tính hợp lệ (Trùng mã/tên);
+    if (Hợp lệ?) then (Đúng)
+        :Lưu dữ liệu vào Database;
+    else (Sai)
+        :Báo lỗi dữ liệu;
+    endif
+
+else (Xóa)
+    if (Xóa Danh mục?) then (Đúng)
+        :Kiểm tra: Danh mục có chứa sản phẩm không?;
+        if (Còn sản phẩm?) then (Có)
+            :Báo lỗi ràng buộc dữ liệu;
+            stop
+        endif
+    endif
+    :Cập nhật trạng thái is_active = false (Soft Delete);
+endif
+
+:Thông báo kết quả & Làm mới giao diện;
+stop
+@enduml

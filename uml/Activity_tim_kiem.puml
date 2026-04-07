@@ -1,0 +1,21 @@
+@startuml
+title Activity Diagram: Tìm kiếm & Xem chi tiết Sản phẩm
+skinparam theme plain
+
+start
+:Nhập từ khóa (Tên sản phẩm hoặc Mã SP);
+:Hệ thống thực hiện truy vấn linh hoạt;
+note right: WHERE name LIKE %?% OR code = ?
+
+if (Tìm thấy sản phẩm?) then (Có)
+    :Hiển thị danh sách kết quả lên bảng;
+    if (Nhân viên nhấn "Xem chi tiết"?) then (Đúng)
+        :Truy vấn đa bảng (Join Product & Attributes);
+        :Hiển thị bảng thuộc tính chi tiết\n(Size, Color, Material, Inventory);
+    endif
+else (Không)
+    :Thông báo "Không tìm thấy sản phẩm";
+endif
+
+stop
+@enduml

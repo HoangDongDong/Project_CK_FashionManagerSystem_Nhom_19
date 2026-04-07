@@ -1,0 +1,85 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Quản lý (Admin)" as Admin
+participant "StaffManagementPanel" as UI
+participant "StaffController" as Controller
+participant "StaffService" as Service
+participant "StaffRepository" as Repo
+database "MySQL / JPA" as Database
+
+' --- Luồng 1: Hiển thị danh sách nhân viên ---
+Admin -> UI : Click "Quản lý nhân viên"
+activate UI
+
+UI -> Controller : getStaffList()
+activate Controller
+
+Controller -> Service : getAllStaff()
+activate Service
+
+Service -> Repo : findAll()
+activate Repo
+
+Repo -> Database : SELECT * FROM Staff
+activate Database
+Database -->> Repo : List<StaffEntity>
+deactivate Database
+
+Repo -->> Service : List<Staff>
+deactivate Repo
+
+Service -->> Controller : List<StaffDTO>
+deactivate Service
+
+Controller -->> UI : Hiển thị danh sách nhân viên
+deactivate Controller
+
+' --- Khối điều kiện Alt cho các thao tác Quản lý ---
+alt Admin chọn Thêm nhân viên
+    Admin -> UI : Nhập thông tin & Nhấn "Lưu"
+    UI -> Controller : addStaff(dto)
+    activate Controller
+    Controller -> Service : save(dto)
+    activate Service
+    Service -> Repo : save()
+    activate Repo
+    Repo -> Database : INSERT...
+    activate Database
+    Database -->> Repo : Success
+    deactivate Database
+    Repo -->> Service : Success
+    deactivate Repo
+    Service -->> Controller : Success
+    deactivate Service
+    Controller -->> UI : Báo thành công
+    deactivate Controller
+
+else Admin chọn Khóa nhân viên
+    Admin -> UI : Chọn NV & Nhấn "Khóa"
+    UI -> Controller : lockStaff(id)
+    activate Controller
+    Controller -> Service : updateStatus(id, false)
+    activate Service
+    Service -> Repo : updateActive()
+    activate Repo
+    Repo -> Database : UPDATE Account SET is_active=0...
+    activate Database
+    Database -->> Repo : Success
+    deactivate Database
+    Repo -->> Service : Success
+    deactivate Repo
+    Service -->> Controller : Success
+    deactivate Service
+    Controller -->> UI : Báo đã khóa
+    deactivate Controller
+end
+
+deactivate UI
+
+@enduml

@@ -1,0 +1,35 @@
+@startuml
+title Activity Diagram: Quản lý Danh mục
+skinparam conditionStyle inside
+skinparam theme plain
+
+start
+:Admin chọn hành động (Thêm / Sửa / Xóa);
+
+if (Hành động?) then (Thêm mới)
+    :Nhập tên danh mục;
+    :Hệ thống kiểm tra findByName();
+    if (Tên đã tồn tại?) then (Có)
+        :Thông báo lỗi "Trùng tên";
+    else (Không)
+        :Thực hiện INSERT dữ liệu;
+        :Thông báo thành công;
+    endif
+
+else if (Chỉnh sửa) then
+    :Thay đổi thông tin (Tên/Mô tả);
+    :Thực hiện UPDATE dữ liệu;
+    :Thông báo thành công;
+
+else (Xóa)
+    :Hệ thống kiểm tra countByCategoryId();
+    if (Danh mục còn sản phẩm?) then (Còn)
+        :Thông báo lỗi "Ràng buộc dữ liệu";
+    else (Trống)
+        :Thực hiện DELETE dữ liệu;
+        :Thông báo thành công;
+    endif
+endif
+
+stop
+@enduml

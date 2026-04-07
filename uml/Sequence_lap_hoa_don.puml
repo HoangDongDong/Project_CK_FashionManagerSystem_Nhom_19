@@ -1,0 +1,96 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Nhân viên (Staff)" as Staff
+participant "OrderPanel" as OrderPanel
+participant "OrderController" as OrderController
+participant "OrderService" as OrderService
+participant "CustomerRepo" as CustomerRepo
+participant "ProductRepo" as ProductRepo
+participant "OrderRepo" as OrderRepo
+database "MySQL / JPA" as Database
+
+' --- Luồng 1: Thêm sản phẩm ---
+Staff -> OrderPanel : Nhập mã sản phẩm và số lượng
+OrderPanel -> OrderController : addProductToOrder(productId, quantity)
+activate OrderController
+
+OrderController -> OrderService : validateStock(productId, quantity)
+activate OrderService
+
+OrderService -> ProductRepo : findById(productId)
+activate ProductRepo
+ProductRepo -> Database : SELECT * FROM products WHERE id = ?
+activate Database
+Database -->> ProductRepo : Product Object
+deactivate Database
+ProductRepo -->> OrderService : return Product
+deactivate ProductRepo
+
+alt Nếu số lượng tồn kho < số lượng yêu cầu
+    OrderService -->> OrderController : throw OutOfStockException
+    OrderController -->> OrderPanel : Hiển thị lỗi "Không đủ hàng"
+else Nếu đủ hàng
+    OrderService -->> OrderController : return Success
+    OrderController -->> OrderPanel : Thêm sản phẩm vào bảng danh sách chờ
+end
+deactivate OrderService
+deactivate OrderController
+
+' --- Luồng 2: Thanh toán ---
+Staff -> OrderPanel : Nhập SĐT khách & Nhấn "Xác nhận thanh toán"
+OrderPanel -> OrderController : processCheckout(orderData, phoneNumber)
+activate OrderController
+
+OrderController -> OrderService : saveOrder(orderData, phoneNumber)
+activate OrderService
+
+OrderService -> Database : Begin Transaction
+activate Database
+OrderService -> CustomerRepo : findByPhone(phoneNumber)
+activate CustomerRepo
+CustomerRepo -> Database : SELECT * FROM customers WHERE phone = ?
+Database -->> CustomerRepo : Customer Object / null
+CustomerRepo -->> OrderService : return Customer
+deactivate CustomerRepo
+
+alt Khách hàng chưa có trong hệ thống (Customer == null)
+    OrderService -> CustomerRepo : save(new Customer(phoneNumber))
+    activate CustomerRepo
+    CustomerRepo -> Database : INSERT INTO customers (phone) VALUES (...)
+    Database -->> CustomerRepo : Success
+    CustomerRepo -->> OrderService : return NewCustomerObject
+    note right: Tự động đăng ký khách hàng mới
+    deactivate CustomerRepo
+end
+
+OrderService -> OrderRepo : save(new Order with Customer)
+activate OrderRepo
+OrderRepo -> Database : saveDetails(List<Item>)
+OrderRepo -->> OrderService : Success
+deactivate OrderRepo
+
+OrderService -> ProductRepo : decreaseStock(productId, quantity)
+activate ProductRepo
+ProductRepo -> Database : UPDATE Inventory...
+Database -->> ProductRepo : Success
+ProductRepo -->> OrderService : Success
+deactivate ProductRepo
+
+OrderService -> Database : Commit Transaction
+deactivate Database
+
+OrderService -->> OrderController : OrderSuccessDTO
+deactivate OrderService
+
+OrderController -->> OrderPanel : Hiển thị thành công & In hóa đơn
+deactivate OrderController
+
+OrderPanel -->> Staff : Hoàn tất giao dịch
+
+@enduml

@@ -1,0 +1,29 @@
+@startuml
+title Activity Diagram: Quản lý Khách hàng
+skinparam conditionStyle inside
+
+start
+:Nhân viên/Quản lý mở danh sách khách hàng;
+
+if (Chọn hành động?) then (Thêm mới)
+    :Nhập Tên, SĐT, Địa chỉ;
+    :Kiểm tra trùng SĐT (checkPhoneExists);
+    if (SĐT đã tồn tại?) then (Có)
+        :Thông báo "Khách hàng đã có tài khoản";
+    else (Không)
+        :INSERT thông tin khách hàng mới;
+    endif
+
+else if (Chỉnh sửa) then
+    :Thay đổi thông tin (Tên, Địa chỉ...);
+    :Thực hiện UPDATE (JPA save);
+
+else (Khóa / Blacklist)
+    :Cập nhật trạng thái is_active = false;
+    :Ghi nhận lý do đưa vào Blacklist;
+endif
+
+:Thông báo kết quả thành công;
+:Làm mới (Reload) danh sách;
+stop
+@enduml

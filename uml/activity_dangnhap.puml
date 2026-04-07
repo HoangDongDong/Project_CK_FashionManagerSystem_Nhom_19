@@ -1,0 +1,44 @@
+@startuml
+title Activity Diagram: Lập hóa đơn (Khớp với Sequence)
+skinparam conditionStyle inside
+skinparam theme plain
+
+start
+:Nhân viên nhập mã sản phẩm và số lượng;
+:Gửi yêu cầu addProductToOrder();
+
+partition "Xác thực tồn kho (validateStock)" {
+    :Hệ thống truy vấn thông tin sản phẩm từ Database;
+    if (Số lượng tồn kho < Số lượng yêu cầu?) then (Đúng)
+        :Ném lỗi OutOfStockException;
+        :Hiển thị lỗi "Không đủ hàng";
+        stop
+    else (Sai)
+        :Trả về kết quả Success;
+        :Thêm sản phẩm vào bảng danh sách chờ;
+    endif
+}
+
+:Nhân viên nhập SĐT khách & nhấn "Xác nhận thanh toán";
+
+partition "Quy trình Thanh toán (Transaction)" {
+    :Bắt đầu Transaction;
+    :Tìm kiếm khách hàng theo SĐT (findByPhone);
+
+    if (Khách hàng chưa có trong hệ thống?) then (Đúng)
+        :Tự động đăng ký khách hàng mới;
+        :Lưu thông tin vào Database;
+    else (Sai)
+        :Lấy thông tin khách hàng hiện tại;
+    endif
+
+    :Lưu hóa đơn tổng (saveOrder);
+    :Lưu chi tiết hóa đơn (saveDetails);
+    :Thực hiện giảm tồn kho (decreaseStock);
+    :Kết thúc Transaction (Commit);
+}
+
+:Hiển thị thông báo thành công & In hóa đơn;
+:Hoàn tất giao dịch;
+stop
+@enduml

@@ -1,0 +1,50 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Nhân viên (Staff)" as Staff
+participant "ProductManagementPanel\n(Giao diện)" as UI
+participant "ProductController" as Controller
+participant "ProductService" as Service
+participant "ProductRepository" as Repo
+database "MySQL / JPA" as DB
+
+' --- Luồng xử lý ---
+note over Staff : (Include - Xác thực): Nhân viên đã đăng nhập thành công.
+
+Staff -> UI : Click chọn menu "Quản lý sản phẩm"
+activate UI
+
+UI -> Controller : getProductList()
+activate Controller
+
+Controller -> Service : Lấy dữ liệu sản phẩm
+activate Service
+
+Service -> Repo : Truy vấn sản phẩm đang hoạt động\n(is_active = true)
+activate Repo
+
+Repo -> DB : SELECT * FROM Product WHERE is_active = true
+activate DB
+DB -->> Repo : Trả về tập kết quả (List<Entity>)
+deactivate DB
+
+Repo -->> Service : Trả về danh sách Entity
+deactivate Repo
+
+Service -->> Controller : Chuyển đổi thành List<DTO> và trả về
+deactivate Service
+
+Controller -->> UI : Trả về danh sách DTO
+deactivate Controller
+
+UI -->> Staff : Hiển thị danh sách sản phẩm lên màn hình
+
+note over Staff : Sẵn sàng cho các hành động\n(Thêm/Sửa/Xóa)
+deactivate UI
+
+@enduml

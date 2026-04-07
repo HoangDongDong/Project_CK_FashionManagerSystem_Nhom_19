@@ -1,0 +1,117 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "User\n(Staff / Admin)" as User
+participant "CustomerPanel" as UI
+participant "CustomerController" as Controller
+participant "CustomerService" as Service
+participant "CustomerRepository" as Repo
+database "MySQL" as DB
+
+' --- LUỒNG HIỂN THỊ / TÌM KIẾM ---
+User -> UI : Mở Quản lý Khách hàng\n(Hoặc tìm theo SĐT)
+activate UI
+
+UI -> Controller : getAllCustomers() / search(phone)
+activate Controller
+
+Controller -> Service : getCustomers()
+activate Service
+
+Service -> Repo : findAll() / findByPhone()
+activate Repo
+
+Repo -> DB : SELECT * FROM Customer...
+activate DB
+DB -->> Repo : Result
+deactivate DB
+
+Repo -->> Service : List<CustomerEntity>
+deactivate Repo
+
+Service -->> Controller : List<CustomerDTO>
+deactivate Service
+
+Controller -->> UI : Trả về dữ liệu
+deactivate Controller
+
+UI -->> User : Hiển thị danh sách Khách hàng
+deactivate UI
+
+' --- CÁC THAO TÁC QUẢN LÝ (ALT) ---
+User -> UI : Chọn hành động (Thêm / Sửa)
+activate UI
+
+alt Action: Thêm Khách hàng mới
+    User -> UI : Nhập Tên, SĐT, Địa chỉ & Nhấn "Lưu"
+    UI -> Controller : createCustomer(dto)
+    activate Controller
+    Controller -> Service : addCustomer(dto)
+    activate Service
+    Service -> Repo : checkPhoneExists(dto.phone)
+    activate Repo
+    Repo -->> Service : false (Hợp lệ)
+    deactivate Repo
+    Service -> Repo : save(entity)
+    activate Repo
+    Repo -> DB : INSERT INTO Customer (customer_name, phone...)
+    activate DB
+    DB -->> Repo : Success
+    deactivate DB
+    Repo -->> Service : Saved Entity
+    deactivate Repo
+    Service -->> Controller : SuccessDTO
+    deactivate Service
+    Controller -->> UI : OK
+    deactivate Controller
+    UI -->> User : Thông báo "Thêm khách hàng thành công"
+
+else Action: Sửa thông tin Khách hàng
+    User -> UI : Thay đổi Tên, SĐT, Địa chỉ & Nhấn "Lưu"
+    UI -> Controller : updateCustomer(id, updateDTO)
+    activate Controller
+    Controller -> Service : editCustomer(id, updateDTO)
+    activate Service
+    Service -> Repo : save(entity)
+    activate Repo
+    Repo -> DB : UPDATE Customer SET customer_name=?, phone=?... WHERE id=?
+    activate DB
+    DB -->> Repo : Success
+    deactivate DB
+    Repo -->> Service : Updated Entity
+    deactivate Repo
+    Service -->> Controller : SuccessDTO
+    deactivate Service
+    Controller -->> UI : OK
+    deactivate Controller
+    UI -->> User : Thông báo "Cập nhật thành công"
+
+else Action: Khóa / Cấm mua hàng (Blacklist)
+    User -> UI : Chọn Khách hàng & Nhấn "Khóa"
+    UI -> Controller : banCustomer(id)
+    activate Controller
+    Controller -> Service : setCustomerInactive(id)
+    activate Service
+    Service -> Repo : updateStatus(id, false)
+    activate Repo
+    Repo -> DB : UPDATE Customer SET is_active = false WHERE customer_id = ?
+    activate DB
+    DB -->> Repo : Success
+    deactivate DB
+    Repo -->> Service : OK
+    deactivate Repo
+    Service -->> Controller : SuccessDTO
+    deactivate Service
+    Controller -->> UI : OK
+    deactivate Controller
+    UI -->> User : "Khách hàng đã bị đưa vào Blacklist" & Làm mới DS
+end
+
+deactivate UI
+
+@enduml

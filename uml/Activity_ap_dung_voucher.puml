@@ -1,0 +1,41 @@
+@startuml
+title Activity Diagram: Lập hóa đơn & Áp dụng Voucher
+skinparam conditionStyle inside
+skinparam theme plain
+
+start
+:Nhân viên chọn sản phẩm và số lượng;
+:Hệ thống kiểm tra tồn kho;
+
+if (Đủ hàng trong kho?) then (Không)
+    :Thông báo "Hết hàng";
+    stop
+else (Có)
+    :Thêm vào danh sách giỏ hàng;
+endif
+
+if (Có mã giảm giá?) then (Có)
+    :Nhập Voucher Code;
+    :Kiểm tra hiệu lực (Hạn dùng, Trạng thái);
+    :Kiểm tra điều kiện đơn hàng tối thiểu;
+    if (Hợp lệ?) then (Đúng)
+        :Tính toán số tiền giảm (Discount);
+        :Cập nhật lại Tổng tiền đơn hàng;
+    else (Sai)
+        :Thông báo "Mã không hợp lệ";
+    endif
+endif
+
+:Nhập SĐT khách hàng;
+if (Khách hàng đã có trong hệ thống?) then (Không)
+    :Tự động đăng ký thông tin khách hàng mới;
+endif
+
+partition "Transaction: Hoàn tất đơn hàng" {
+    :Lưu Hóa đơn & Chi tiết hóa đơn;
+    :Cập nhật giảm tồn kho thực tế;
+}
+
+:In hóa đơn và Hoàn tất giao dịch;
+stop
+@enduml

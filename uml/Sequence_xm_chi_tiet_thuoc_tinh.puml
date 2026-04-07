@@ -1,0 +1,47 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Nhân viên (Staff)" as Staff
+participant "ProductDetailDialog" as UI
+participant "ProductController" as Controller
+participant "ProductService" as Service
+participant "ProductRepository" as Repo
+database "MySQL / JPA" as Database
+
+' --- Luồng xử lý ---
+Staff -> UI : Chọn sản phẩm từ danh sách
+Staff -> UI : Click "Xem chi tiết"
+
+activate UI
+UI -> Controller : getProductDetails(productId)
+activate Controller
+
+Controller -> Service : getFullProductInfo(productId)
+activate Service
+
+Service -> Repo : findProductWithAttributes(productId)
+activate Repo
+
+Repo -> Database : SELECT * FROM products p \nLEFT JOIN attributes a ON p.id = a.product_id \nWHERE p.id = ?
+activate Database
+Database -->> Repo : ResultSet (Product + List of Attributes)
+deactivate Database
+
+Repo -->> Service : Product Entity (with Attributes Collection)
+deactivate Repo
+
+Service -->> Controller : ProductDetailDTO (Size, Color, Material,...)
+deactivate Service
+
+Controller -->> UI : Display Full Details
+deactivate Controller
+
+UI -->> Staff : Hiển thị bảng thuộc tính (Size S: 5, Size M: 10,...)
+deactivate UI
+
+@enduml

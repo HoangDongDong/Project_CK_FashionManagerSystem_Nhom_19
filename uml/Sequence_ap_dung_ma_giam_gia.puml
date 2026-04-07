@@ -1,0 +1,57 @@
+@startuml
+' --- Cấu hình giao diện ---
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+skinparam monochrome true
+skinparam shadowing false
+
+' --- Khai báo các đối tượng ---
+actor "Nhân viên (Staff)" as Staff
+participant "OrderPanel" as OrderPanel
+participant "VoucherController" as VoucherController
+participant "VoucherService" as VoucherService
+participant "VoucherRepository" as VoucherRepository
+database "MySQL / JPA" as Database
+
+' --- Luồng xử lý ---
+Staff -> OrderPanel : Nhập mã Voucher (Voucher Code)
+Staff -> OrderPanel : Click "Áp dụng"
+
+OrderPanel -> VoucherController : applyVoucher(voucherCode, currentOrderTotal)
+activate VoucherController
+
+VoucherController -> VoucherService : validateAndCalculateDiscount(voucherCode, currentOrderTotal)
+activate VoucherService
+
+VoucherService -> VoucherRepository : findByCode(voucherCode)
+activate VoucherRepository
+
+VoucherRepository -> Database : SELECT * FROM vouchers WHERE code = ? AND status = 'ACTIVE'
+activate Database
+Database -->> VoucherRepository : Voucher Entity (ExpireDate, MinOrderValue, DiscountAmount,...)
+deactivate Database
+
+VoucherRepository -->> VoucherService : return Voucher Object
+deactivate VoucherRepository
+
+' --- Khối điều kiện Alt ---
+alt Voucher không tồn tại hoặc đã hết hạn
+    VoucherService -->> VoucherController : throw InvalidVoucherException
+    VoucherController -->> OrderPanel : Hiển thị lỗi "Mã không hợp lệ hoặc hết hạn"
+
+else Tổng hóa đơn chưa đủ điều kiện tối thiểu (MinOrderValue)
+    VoucherService -->> VoucherController : throw RequirementNotMetException
+    VoucherController -->> OrderPanel : Hiển thị lỗi "Đơn hàng chưa đủ giá trị tối thiểu"
+
+else Voucher hợp lệ
+    VoucherService -> VoucherService : Tính toán số tiền giảm (Discount)
+    VoucherService -->> VoucherController : return DiscountResult (Số tiền giảm + Tổng mới)
+    deactivate VoucherService
+
+    VoucherController -->> OrderPanel : Cập nhật UI (Hiển thị giá giảm & Tổng cộng mới)
+    deactivate VoucherController
+
+    OrderPanel -->> Staff : Hiển thị "Áp dụng mã thành công"
+end
+
+@enduml
